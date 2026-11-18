@@ -52,6 +52,6 @@ data:
     "gridPos": {"h": 8, "w": 12, "x": 12, "y": 19}, "id": 7, "options": {"legend":
     {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
     "targets": [{"expr": "sum by (topic) (kafka_log_log_size)", "refId": "A", "legendFormat":
-    "{{topic}}"}, {"expr": "node_filesystem_avail_bytes{mountpoint=\"/\"}", "refId":
+    "{{topic}}"}, {"expr": "max(node_filesystem_avail_bytes{fstype=\"ext4\"})", "refId":
     "A", "legendFormat": "node free"}], "title": "Log size and node disk", "type":
     "timeseries"}]}'

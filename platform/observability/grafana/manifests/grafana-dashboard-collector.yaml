@@ -33,8 +33,7 @@ data:
     {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
     {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
     "id": 3, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
-    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (collector) (rate(otelcol_exporter_send_failed_log_records_total[5m])
-    + rate(otelcol_exporter_send_failed_spans_total[5m]) + rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "(sum by (collector) (rate(otelcol_exporter_send_failed_log_records_total[5m])) or sum by (collector) (otelcol_exporter_sent_log_records_total) * 0) + (sum by (collector) (rate(otelcol_exporter_send_failed_spans_total[5m])) or sum by (collector) (otelcol_exporter_sent_log_records_total) * 0) + (sum by (collector) (rate(otelcol_exporter_send_failed_metric_points_total[5m])) or sum by (collector) (otelcol_exporter_sent_log_records_total) * 0)",
     "refId": "A", "legendFormat": "{{collector}}"}], "title": "Export failures", "type":
     "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
     {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12,

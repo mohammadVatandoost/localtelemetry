@@ -54,8 +54,8 @@ data:
     19}, "id": 7, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
     "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_failed_total[5m]))
     or sum(rate(elasticsearch_indices_indexing_index_failed_total[5m]))", "refId":
-    "A", "legendFormat": "es failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_log_records_total{job=\"otel-backend\"}[5m]))",
-    "refId": "A", "legendFormat": "log export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_spans_total{job=\"otel-backend\"}[5m]))",
-    "refId": "A", "legendFormat": "span export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total{job=\"otel-backend\"}[5m]))",
+    "A", "legendFormat": "es failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_log_records_total{job=\"otel-backend\"}[5m])) or vector(0)",
+    "refId": "A", "legendFormat": "log export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_spans_total{job=\"otel-backend\"}[5m])) or vector(0)",
+    "refId": "A", "legendFormat": "span export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total{job=\"otel-backend\"}[5m])) or vector(0)",
     "refId": "A", "legendFormat": "metric export failed"}], "title": "Indexing failures",
     "type": "timeseries"}]}'
