@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-slo
+  namespace: observability
+  labels:
+    grafana_dashboard: '1'
+    app.kubernetes.io/part-of: otel-platform
+  annotations:
+    grafana_folder: OpenTelemetry
+data:
+  otel-slo.json: '{"uid": "otel-slo", "title": "Ingestion SLO", "description": "Event-based
+    log SLO and probe-based trace and metric canaries.", "tags": ["otel-platform"],
+    "timezone": "browser", "schemaVersion": 39, "version": 1, "refresh": "30s", "time":
+    {"from": "now-1h", "to": "now"}, "panels": [{"gridPos": {"h": 6, "w": 24, "x":
+    0, "y": 0}, "id": 1, "options": {"mode": "markdown", "content": "**Event-based
+    log SLO.** For each log with both timestamps, the gateway measures `ObservedTimestamp
+    - Timestamp`. The 30-day objective is 99.9% of those events at or under 30 seconds.
+    Missing timestamps and negative durations are data-quality failures and are excluded
+    from the latency ratio.\n\nThis duration includes SDK buffering, the client''s
+    clock, and time before the gateway observed the record. It is not network latency.\n\n**Probe-based
+    trace and metric SLO.** A canary sends one trace and one metric each minute and
+    records whether Elasticsearch can find it within 60 seconds. `avg_over_time` of
+    that 0/1 gauge is the fraction of probe time inside the objective. It does not
+    mean 99.9% of all traces or metric points.\n\nThe 1 hour series are operational
+    indicators. The 30 day series are the SLO. Export success and Kafka lag are supporting
+    signals, not the SLO."}, "title": "", "type": "text"}, {"datasource": {"type":
+    "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "percentunit"},
+    "overrides": []}, "gridPos": {"h": 8, "w": 8, "x": 0, "y": 6}, "id": 2, "options":
+    {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode":
+    "multi"}}, "targets": [{"expr": "slo:logs_event_age:within_30s:ratio_30d", "refId":
+    "A", "legendFormat": "30d ratio"}, {"expr": "slo:logs_event_age:target", "refId":
+    "A", "legendFormat": "target 99.9%"}], "title": "Log event-age SLO (30d)", "type":
+    "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
+    {"defaults": {"unit": "percentunit"}, "overrides": []}, "gridPos": {"h": 8, "w":
+    8, "x": 8, "y": 6}, "id": 3, "options": {"legend": {"displayMode": "list", "placement":
+    "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "slo:logs_event_age:within_30s:ratio_1h",
+    "refId": "A", "legendFormat": "1h ratio"}], "title": "Log event-age ratio (1h)",
+    "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
+    "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h":
+    8, "w": 8, "x": 16, "y": 6}, "id": 4, "options": {"legend": {"displayMode": "list",
+    "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "slo:logs_timestamp_quality:invalid_ratio_1h",
+    "refId": "A", "legendFormat": "invalid ratio"}, {"expr": "sum(rate(otel_log_timestamp_missing_total[5m]))",
+    "refId": "A", "legendFormat": "missing"}, {"expr": "sum(rate(otel_log_timestamp_negative_total[5m]))",
+    "refId": "A", "legendFormat": "negative"}], "title": "Log timestamp quality failures
+    (1h)", "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
+    "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []}, "gridPos":
+    {"h": 8, "w": 8, "x": 0, "y": 14}, "id": 5, "options": {"legend": {"displayMode":
+    "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr":
+    "slo:traces_canary:within_objective:ratio_30d", "refId": "A", "legendFormat":
+    "30d"}, {"expr": "slo:traces_canary:within_objective:ratio_1h", "refId": "A",
+    "legendFormat": "1h"}, {"expr": "slo:traces_canary:target", "refId": "A", "legendFormat":
+    "target"}], "title": "Trace canary SLO", "type": "timeseries"}, {"datasource":
+    {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit":
+    "percentunit"}, "overrides": []}, "gridPos": {"h": 8, "w": 8, "x": 8, "y": 14},
+    "id": 6, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "slo:metrics_canary:within_objective:ratio_30d",
+    "refId": "A", "legendFormat": "30d"}, {"expr": "slo:metrics_canary:within_objective:ratio_1h",
+    "refId": "A", "legendFormat": "1h"}, {"expr": "slo:metrics_canary:target", "refId":
+    "A", "legendFormat": "target"}], "title": "Metric canary SLO", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "s"}, "overrides": []}, "gridPos": {"h": 8, "w": 8, "x": 16, "y": 14},
+    "id": 7, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "otel_canary_e2e_latency_seconds",
+    "refId": "A", "legendFormat": "{{signal}}"}, {"expr": "otel_canary_delivery_success",
+    "refId": "A", "legendFormat": "{{signal}} success"}], "title": "Latest canary
+    latency", "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid":
+    "prometheus"}, "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides":
+    []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22}, "id": 8, "options": {"legend":
+    {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+    "targets": [{"expr": "slo:pipeline:export_success:ratio_5m", "refId": "A", "legendFormat":
+    "{{collector}}"}], "title": "Collector export success (supporting)", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y":
+    22}, "id": 9, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "kafka:consumer_lag:otel_backend",
+    "refId": "A", "legendFormat": "{{topic}}"}], "title": "Kafka lag (supporting)",
+    "type": "timeseries"}]}'

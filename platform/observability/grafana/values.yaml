@@ -1,0 +1,42 @@
+adminUser: admin
+admin:
+  existingSecret: grafana-admin
+  userKey: admin-user
+  passwordKey: admin-password
+
+persistence:
+  enabled: false
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 3000
+  nodePort: 30300
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 256Mi
+
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    searchNamespace: observability
+    folderAnnotation: grafana_folder
+    provider:
+      allowUiUpdates: false
+      foldersFromFilesStructure: false
+  datasources:
+    enabled: true
+    label: grafana_datasource
+    labelValue: "1"
+    searchNamespace: observability
+
+datasources: {}
+dashboardProviders: {}
+dashboards: {}

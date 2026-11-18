@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-ingestion
+  namespace: observability
+  labels:
+    grafana_dashboard: '1'
+    app.kubernetes.io/part-of: otel-platform
+  annotations:
+    grafana_folder: OpenTelemetry
+data:
+  otel-ingestion.json: '{"uid": "otel-ingestion", "title": "Ingestion overview", "description":
+    "End-to-end ingestion rates.", "tags": ["otel-platform"], "timezone": "browser",
+    "schemaVersion": 39, "version": 1, "refresh": "30s", "time": {"from": "now-1h",
+    "to": "now"}, "panels": [{"gridPos": {"h": 3, "w": 24, "x": 0, "y": 0}, "id":
+    1, "options": {"mode": "markdown", "content": "Incoming telemetry is counted at
+    the gateway receiver. Kafka throughput is broker bytes. Backend throughput is
+    what the backend collector exported to Elasticsearch. Indexing rate is an Elasticsearch
+    operational indicator, not the ingestion SLO."}, "title": "", "type": "text"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 3},
+    "id": 2, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(otelcol_receiver_accepted_log_records_total{job=\"otel-gateway\"}[5m]))",
+    "refId": "A", "legendFormat": "logs"}, {"expr": "sum(rate(otelcol_receiver_accepted_spans_total{job=\"otel-gateway\"}[5m]))",
+    "refId": "A", "legendFormat": "spans"}, {"expr": "sum(rate(otelcol_receiver_accepted_metric_points_total{job=\"otel-gateway\"}[5m]))",
+    "refId": "A", "legendFormat": "metric points"}], "title": "Gateway accepted logs,
+    spans, metric points", "type": "timeseries"}, {"datasource": {"type": "prometheus",
+    "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides":
+    []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 3}, "id": 3, "options": {"legend":
+    {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+    "targets": [{"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesinpersec_total[5m]))",
+    "refId": "A", "legendFormat": "bytes in"}, {"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesoutpersec_total[5m]))",
+    "refId": "A", "legendFormat": "bytes out"}], "title": "Kafka bytes in and out",
+    "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
+    "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h":
+    8, "w": 12, "x": 0, "y": 11}, "id": 4, "options": {"legend": {"displayMode": "list",
+    "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "kafka:consumer_lag:otel_backend",
+    "refId": "A", "legendFormat": "{{topic}}"}], "title": "Kafka consumer lag", "type":
+    "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
+    {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x":
+    12, "y": 11}, "id": 5, "options": {"legend": {"displayMode": "list", "placement":
+    "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(otelcol_exporter_sent_log_records_total{job=\"otel-backend\"}[5m]))",
+    "refId": "A", "legendFormat": "logs"}, {"expr": "sum(rate(otelcol_exporter_sent_spans_total{job=\"otel-backend\"}[5m]))",
+    "refId": "A", "legendFormat": "spans"}, {"expr": "sum(rate(otelcol_exporter_sent_metric_points_total{job=\"otel-backend\"}[5m]))",
+    "refId": "A", "legendFormat": "metric points"}], "title": "Backend export rate",
+    "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
+    "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h":
+    8, "w": 12, "x": 0, "y": 19}, "id": 6, "options": {"legend": {"displayMode": "list",
+    "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_total[5m]))
+    or sum(rate(elasticsearch_indices_indexing_index_total[5m]))", "refId": "A", "legendFormat":
+    "index total"}], "title": "Elasticsearch indexing rate", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y":
+    19}, "id": 7, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_failed_total[5m]))
+    or sum(rate(elasticsearch_indices_indexing_index_failed_total[5m]))", "refId":
+    "A", "legendFormat": "es failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_log_records_total{job=\"otel-backend\"}[5m]))",
+    "refId": "A", "legendFormat": "log export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_spans_total{job=\"otel-backend\"}[5m]))",
+    "refId": "A", "legendFormat": "span export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total{job=\"otel-backend\"}[5m]))",
+    "refId": "A", "legendFormat": "metric export failed"}], "title": "Indexing failures",
+    "type": "timeseries"}]}'

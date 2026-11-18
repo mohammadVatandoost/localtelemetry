@@ -1,0 +1,147 @@
+# Backend collector, contrib 0.165.1.
+#
+# Kafka otlp_proto payloads keep Timestamp and ObservedTimestamp. This process
+# does not rewrite them. data_stream attributes select the Elasticsearch data
+# streams. With mapping mode otel, dynamic routing appends ".otel" to the
+# dataset, so the streams are:
+#   logs-otel.otel-prod
+#   traces-otel.otel-prod
+#   metrics-otel.otel-prod
+# Static index names are intentionally unset so that suffix is applied.
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  file_storage:
+    directory: /var/lib/otelcol/file_storage
+    create_directory: true
+    timeout: 1s
+
+receivers:
+  kafka:
+    brokers:
+      - otel-kafka-bootstrap.kafka.svc.cluster.local:9092
+    group_id: otel-backend
+    client_id: otel-backend
+    initial_offset: earliest
+    session_timeout: 30s
+    logs:
+      topics: [otel-logs]
+      encoding: otlp_proto
+    traces:
+      topics: [otel-traces]
+      encoding: otlp_proto
+    metrics:
+      topics: [otel-metrics]
+      encoding: otlp_proto
+    autocommit:
+      enable: true
+      interval: 1s
+    message_marking:
+      after: true
+      on_error: false
+      on_permanent_error: false
+    error_backoff:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      multiplier: 1.5
+      randomization_factor: 0.5
+      max_elapsed_time: 0s
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 200
+    spike_limit_mib: 40
+  transform/elastic:
+    error_mode: ignore
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["data_stream.dataset"], "otel")
+          - set(attributes["data_stream.namespace"], "prod")
+      - context: scope
+        statements:
+          - set(attributes["elastic.mapping.mode"], "otel")
+    trace_statements:
+      - context: resource
+        statements:
+          - set(attributes["data_stream.dataset"], "otel")
+          - set(attributes["data_stream.namespace"], "prod")
+      - context: scope
+        statements:
+          - set(attributes["elastic.mapping.mode"], "otel")
+    metric_statements:
+      - context: resource
+        statements:
+          - set(attributes["data_stream.dataset"], "otel")
+          - set(attributes["data_stream.namespace"], "prod")
+      - context: scope
+        statements:
+          - set(attributes["elastic.mapping.mode"], "otel")
+  batch:
+    timeout: 1s
+    send_batch_size: 256
+    send_batch_max_size: 512
+
+exporters:
+  elasticsearch:
+    endpoints:
+      - https://otel-es-http.telemetry.svc.cluster.local:9200
+    user: elastic
+    password: ${env:ELASTIC_PASSWORD}
+    tls:
+      ca_file: /tls/ca.crt
+    mapping:
+      allowed_modes: [otel]
+    retry:
+      enabled: true
+      max_retries: 5
+      initial_interval: 1s
+      max_interval: 30s
+      retry_on_status: [429, 503]
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 100
+      block_on_overflow: true
+      sizer: requests
+      storage: file_storage
+      batch:
+        flush_timeout: 5s
+        sizer: bytes
+        min_size: 1
+        max_size: 2000000
+    discover:
+      on_start: false
+      interval: 0s
+    include_source_on_error: false
+    timeout: 30s
+
+service:
+  extensions: [health_check, file_storage]
+  telemetry:
+    metrics:
+      level: detailed
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+                without_type_suffix: false
+                without_units: false
+                without_scope_info: true
+  pipelines:
+    logs:
+      receivers: [kafka]
+      processors: [memory_limiter, transform/elastic, batch]
+      exporters: [elasticsearch]
+    traces:
+      receivers: [kafka]
+      processors: [memory_limiter, transform/elastic, batch]
+      exporters: [elasticsearch]
+    metrics:
+      receivers: [kafka]
+      processors: [memory_limiter, transform/elastic, batch]
+      exporters: [elasticsearch]

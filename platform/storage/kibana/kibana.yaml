@@ -1,0 +1,37 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: otel
+  namespace: telemetry
+  labels:
+    app.kubernetes.io/name: kibana
+    app.kubernetes.io/part-of: otel-platform
+spec:
+  version: 9.4.3
+  count: 1
+  elasticsearchRef:
+    name: otel
+  http:
+    service:
+      spec:
+        type: NodePort
+        ports:
+          - name: https
+            port: 5601
+            nodePort: 30601
+            protocol: TCP
+  podTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kibana
+        app.kubernetes.io/part-of: otel-platform
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi

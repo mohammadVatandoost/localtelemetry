@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-elasticsearch
+  namespace: observability
+  labels:
+    grafana_dashboard: '1'
+    app.kubernetes.io/part-of: otel-platform
+  annotations:
+    grafana_folder: OpenTelemetry
+data:
+  otel-elasticsearch.json: '{"uid": "otel-elasticsearch", "title": "Elasticsearch
+    health", "description": "Indexing and node health. Not an end-to-end SLO.", "tags":
+    ["otel-platform"], "timezone": "browser", "schemaVersion": 39, "version": 1, "refresh":
+    "30s", "time": {"from": "now-1h", "to": "now"}, "panels": [{"datasource": {"type":
+    "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "ops"},
+    "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}, "id": 1, "options":
+    {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode":
+    "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_total[5m]))
+    or sum(rate(elasticsearch_indices_indexing_index_total[5m]))", "refId": "A", "legendFormat":
+    "indexed"}], "title": "Indexing rate", "type": "timeseries"}, {"datasource": {"type":
+    "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "ops"},
+    "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}, "id": 2, "options":
+    {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode":
+    "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_failed_total[5m]))
+    or sum(rate(elasticsearch_indices_indexing_index_failed_total[5m]))", "refId":
+    "A", "legendFormat": "failed"}], "title": "Indexing failures", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "s"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+    "id": 3, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_time_seconds_total[5m]))
+    or sum(rate(elasticsearch_indices_indexing_index_time_seconds_total[5m]))", "refId":
+    "A", "legendFormat": "index time"}], "title": "Bulk indexing time", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y":
+    8}, "id": 4, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_refresh_total[5m]))
+    or sum(rate(elasticsearch_indices_refresh_total[5m]))", "refId": "A", "legendFormat":
+    "refresh"}, {"expr": "sum(rate(elasticsearch_index_stats_refresh_time_seconds_total[5m]))
+    or sum(rate(elasticsearch_indices_refresh_time_seconds_total[5m]))", "refId":
+    "A", "legendFormat": "refresh time"}], "title": "Refresh", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y":
+    16}, "id": 5, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_thread_pool_rejected_count{name=\"write\"}[5m]))
+    or sum(elasticsearch_thread_pool_rejected_count{type=\"write\"})", "refId": "A",
+    "legendFormat": "rejected"}], "title": "Write thread-pool rejections", "type":
+    "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
+    {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x":
+    12, "y": 16}, "id": 6, "options": {"legend": {"displayMode": "list", "placement":
+    "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_indexing_pressure_memory_total_rejections_total[5m]))
+    or sum(rate(elasticsearch_indexing_pressure_memory_limit_rejections_total[5m]))",
+    "refId": "A", "legendFormat": "rejections"}], "title": "Indexing pressure rejections",
+    "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
+    "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []}, "gridPos":
+    {"h": 8, "w": 8, "x": 0, "y": 24}, "id": 7, "options": {"legend": {"displayMode":
+    "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr":
+    "elasticsearch_jvm_memory_used_bytes{area=\"heap\"} / clamp_min(elasticsearch_jvm_memory_max_bytes{area=\"heap\"},
+    1)", "refId": "A", "legendFormat": "heap used"}], "title": "JVM heap", "type":
+    "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
+    {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 8,
+    "x": 8, "y": 24}, "id": 8, "options": {"legend": {"displayMode": "list", "placement":
+    "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "rate(elasticsearch_process_cpu_seconds_total[5m])
+    or rate(elasticsearch_os_cpu_percent[5m])", "refId": "A", "legendFormat": "cpu"}],
+    "title": "Process CPU", "type": "timeseries"}, {"datasource": {"type": "prometheus",
+    "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides":
+    []}, "gridPos": {"h": 8, "w": 8, "x": 16, "y": 24}, "id": 9, "options": {"legend":
+    {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+    "targets": [{"expr": "elasticsearch_filesystem_data_available_bytes", "refId":
+    "A", "legendFormat": "available"}], "title": "Disk available", "type": "timeseries"}]}'

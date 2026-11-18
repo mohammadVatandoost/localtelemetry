@@ -1,0 +1,63 @@
+# Local Argo CD. Chart 10.18.1 installs appVersion v3.6.1.
+# Dex and notifications are not installed. ApplicationSet stays at zero replicas.
+# The API listens on HTTP. Kind maps host port 8080 to NodePort 30080.
+fullnameOverride: argocd
+
+global:
+  image:
+    tag: v3.6.1
+
+configs:
+  cm:
+    "timeout.reconciliation": 60s
+    "timeout.reconciliation.jitter": 0s
+  params:
+    "server.insecure": "true"
+
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+
+server:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  service:
+    type: NodePort
+    nodePortHttp: 30080
+
+redis:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+applicationSet:
+  replicas: 0

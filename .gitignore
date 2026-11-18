@@ -1,0 +1,9 @@
+.secrets/
+*.kubeconfig
+*.swp
+.DS_Store
+
+# Terraform provider cache and local state. The lock file stays in git.
+.terraform/
+*.tfstate
+*.tfstate.*

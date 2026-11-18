@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-ilm
+  namespace: telemetry
+  labels:
+    app.kubernetes.io/name: elasticsearch-ilm
+    app.kubernetes.io/part-of: otel-platform
+data:
+  apply.sh: |
+    #!/bin/sh
+    set -eu
+    es="https://otel-es-http.telemetry.svc:9200"
+    auth="elastic:${ELASTIC_PASSWORD}"
+    # Local retention. Change RETENTION_DAYS to keep data longer.
+    days="${RETENTION_DAYS:-3}"
+    echo "waiting for Elasticsearch"
+    i=0
+    until curl -fsS --cacert /tls/ca.crt -u "${auth}" "${es}/_cluster/health" >/dev/null; do
+      i=$((i + 1))
+      if [ "${i}" -gt 60 ]; then
+        echo "Elasticsearch did not become ready" >&2
+        exit 1
+      fi
+      sleep 10
+    done
+    curl -fsS --cacert /tls/ca.crt -u "${auth}" -X PUT "${es}/_ilm/policy/otel-local" \
+      -H 'Content-Type: application/json' \
+      -d "{\"policy\":{\"phases\":{\"hot\":{\"min_age\":\"0ms\",\"actions\":{\"rollover\":{\"max_age\":\"1d\",\"max_primary_shard_size\":\"1gb\"}}},\"delete\":{\"min_age\":\"${days}d\",\"actions\":{\"delete\":{}}}}}}"
+    echo
+    curl -fsS --cacert /tls/ca.crt -u "${auth}" -X PUT "${es}/_index_template/otel-platform-ilm" \
+      -H 'Content-Type: application/json' \
+      -d '{"index_patterns":["logs-otel.otel-prod","traces-otel.otel-prod","metrics-otel.otel-prod"],"priority":500,"data_stream":{},"template":{"settings":{"index.lifecycle.name":"otel-local"}}}'
+    echo
+    for stream in logs-otel.otel-prod traces-otel.otel-prod metrics-otel.otel-prod; do
+      code="$(curl -s -o /dev/null -w '%{http_code}' --cacert /tls/ca.crt -u "${auth}" "${es}/_data_stream/${stream}")"
+      if [ "${code}" = "200" ]; then
+        curl -fsS --cacert /tls/ca.crt -u "${auth}" -X PUT "${es}/${stream}/_settings" \
+          -H 'Content-Type: application/json' \
+          -d '{"index.lifecycle.name":"otel-local"}'
+        echo
+      else
+        echo "data stream ${stream} is not created yet (${code}); the template will apply when the exporter creates it"
+      fi
+    done
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: elasticsearch-ilm
+  namespace: telemetry
+  labels:
+    app.kubernetes.io/name: elasticsearch-ilm
+    app.kubernetes.io/part-of: otel-platform
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: elasticsearch-ilm
+            app.kubernetes.io/part-of: otel-platform
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: ilm
+              image: curlimages/curl:8.16.0
+              imagePullPolicy: IfNotPresent
+              command: ["sh", "/script/apply.sh"]
+              env:
+                - name: RETENTION_DAYS
+                  value: "3"
+                - name: ELASTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: otel-es-elastic-user
+                      key: elastic
+              resources:
+                requests:
+                  cpu: 20m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+                - name: tls
+                  mountPath: /tls
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: elasticsearch-ilm
+                defaultMode: 0555
+            - name: tls
+              secret:
+                secretName: otel-es-http-certs-public

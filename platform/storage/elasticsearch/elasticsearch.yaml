@@ -1,0 +1,57 @@
+# Elasticsearch 9.4.3 matches the version in the ECK 3.5 samples.
+# Heap is not set here. ECK sizes the JVM to about half of the 2Gi limit, so the
+# heap is about 1Gi and the rest of the container remains for native memory.
+# node.store.allow_mmap is false so Kind does not need vm.max_map_count.
+# volumeClaimDeletePolicy keeps the PVC when the Elasticsearch resource is deleted.
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: otel
+  namespace: telemetry
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/part-of: otel-platform
+spec:
+  version: 9.4.3
+  volumeClaimDeletePolicy: DeleteOnScaledownOnly
+  http:
+    service:
+      spec:
+        type: NodePort
+        ports:
+          - name: https
+            port: 9200
+            nodePort: 30920
+            protocol: TCP
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        node.roles: ["master", "data", "ingest"]
+        node.store.allow_mmap: false
+        xpack.ml.enabled: false
+      podTemplate:
+        metadata:
+          labels:
+            app.kubernetes.io/name: elasticsearch
+            app.kubernetes.io/part-of: otel-platform
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                limits:
+                  cpu: "2"
+                  memory: 2Gi
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            storageClassName: local-path
+            resources:
+              requests:
+                storage: 5Gi

@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-collector
+  namespace: observability
+  labels:
+    grafana_dashboard: '1'
+    app.kubernetes.io/part-of: otel-platform
+  annotations:
+    grafana_folder: OpenTelemetry
+data:
+  otel-collector-health.json: '{"uid": "otel-collector-health", "title": "Collector
+    health", "description": "Gateway and backend collector health.", "tags": ["otel-platform"],
+    "timezone": "browser", "schemaVersion": 39, "version": 1, "refresh": "30s", "time":
+    {"from": "now-1h", "to": "now"}, "panels": [{"datasource": {"type": "prometheus",
+    "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "ops"}, "overrides":
+    []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}, "id": 1, "options": {"legend":
+    {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+    "targets": [{"expr": "sum by (collector) (rate(otelcol_receiver_accepted_log_records_total[5m]))",
+    "refId": "A", "legendFormat": "{{collector}} logs"}, {"expr": "sum by (collector)
+    (rate(otelcol_receiver_accepted_spans_total[5m]))", "refId": "A", "legendFormat":
+    "{{collector}} spans"}, {"expr": "sum by (collector) (rate(otelcol_receiver_accepted_metric_points_total[5m]))",
+    "refId": "A", "legendFormat": "{{collector}} metrics"}], "title": "Accepted telemetry",
+    "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
+    "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h":
+    8, "w": 12, "x": 12, "y": 0}, "id": 2, "options": {"legend": {"displayMode": "list",
+    "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum
+    by (collector) (rate(otelcol_receiver_refused_log_records_total[5m]))", "refId":
+    "A", "legendFormat": "{{collector}} logs"}, {"expr": "sum by (collector) (rate(otelcol_receiver_refused_spans_total[5m]))",
+    "refId": "A", "legendFormat": "{{collector}} spans"}, {"expr": "sum by (collector)
+    (rate(otelcol_receiver_refused_metric_points_total[5m]))", "refId": "A", "legendFormat":
+    "{{collector}} metrics"}], "title": "Refused telemetry", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+    "id": 3, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (collector) (rate(otelcol_exporter_send_failed_log_records_total[5m])
+    + rate(otelcol_exporter_send_failed_spans_total[5m]) + rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+    "refId": "A", "legendFormat": "{{collector}}"}], "title": "Export failures", "type":
+    "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
+    {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12,
+    "x": 12, "y": 8}, "id": 4, "options": {"legend": {"displayMode": "list", "placement":
+    "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (collector)
+    (otelcol_exporter_queue_size)", "refId": "A", "legendFormat": "{{collector}} size"},
+    {"expr": "sum by (collector) (otelcol_exporter_queue_capacity)", "refId": "A",
+    "legendFormat": "{{collector}} capacity"}], "title": "Exporter queue size and
+    capacity", "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid":
+    "prometheus"}, "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+    "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}, "id": 5, "options": {"legend":
+    {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+    "targets": [{"expr": "sum by (collector) (rate(otelcol_processor_batch_batch_send_size_sum[5m])
+    / clamp_min(rate(otelcol_processor_batch_batch_send_size_count[5m]), 1e-9))",
+    "refId": "A", "legendFormat": "{{collector}}"}], "title": "Batch size", "type":
+    "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
+    {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12,
+    "x": 12, "y": 16}, "id": 6, "options": {"legend": {"displayMode": "list", "placement":
+    "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (collector)
+    (rate(otelcol_process_cpu_seconds_total[5m]) or rate(otelcol_process_cpu_seconds[5m]))",
+    "refId": "A", "legendFormat": "{{collector}}"}], "title": "CPU", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "bytes"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y":
+    24}, "id": 7, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (collector) (otelcol_process_memory_rss_bytes
+    or process_resident_memory_bytes)", "refId": "A", "legendFormat": "{{collector}}"}],
+    "title": "Memory RSS", "type": "timeseries"}, {"datasource": {"type": "prometheus",
+    "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "short"}, "overrides":
+    []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}, "id": 8, "options": {"legend":
+    {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+    "targets": [{"expr": "sum by (namespace, pod) (kube_pod_container_status_restarts_total{namespace=~\"telemetry|kafka|observability\"})",
+    "refId": "A", "legendFormat": "{{namespace}}/{{pod}}"}], "title": "Pod restarts",
+    "type": "timeseries"}]}'

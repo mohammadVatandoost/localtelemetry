@@ -1,0 +1,48 @@
+fullnameOverride: elasticsearch-exporter
+replicaCount: 1
+
+es:
+  uri: https://elastic@otel-es-http.telemetry.svc.cluster.local:9200
+  all: true
+  indices: true
+  indices_settings: false
+  indices_mappings: false
+  aliases: false
+  shards: true
+  snapshots: false
+  cluster_settings: false
+  slm: false
+  data_stream: true
+  ilm: true
+  timeout: 30s
+  sslSkipVerify: false
+  ssl:
+    enabled: true
+    useExistingSecrets: true
+    ca:
+      path: /ssl/ca.crt
+    client:
+      enabled: false
+
+extraEnvSecrets:
+  ES_PASSWORD:
+    secret: otel-es-elastic-user
+    key: elastic
+
+secretMounts:
+  - name: es-ca
+    secretName: otel-es-http-certs-public
+    path: /ssl
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+serviceMonitor:
+  enabled: false
+podMonitor:
+  enabled: false

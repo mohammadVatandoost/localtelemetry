@@ -1,0 +1,186 @@
+alertmanager:
+  enabled: false
+
+kube-state-metrics:
+  enabled: true
+  fullnameOverride: kube-state-metrics
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+prometheus-node-exporter:
+  enabled: true
+  fullnameOverride: node-exporter
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 64Mi
+
+prometheus-pushgateway:
+  enabled: true
+  fullnameOverride: pushgateway
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+server:
+  fullnameOverride: prometheus-server
+  retention: 30d
+  retentionSize: 8GB
+  global:
+    scrape_interval: 30s
+    evaluation_interval: 30s
+  persistentVolume:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  extraFlags:
+    - web.enable-lifecycle
+
+# Default Kubernetes service discovery is off. It is large for a one-node lab
+# and is not required to watch the ingestion path.
+scrapeConfigs:
+  kubernetes-api-servers:
+    enabled: false
+  kubernetes-nodes:
+    enabled: false
+  kubernetes-nodes-cadvisor:
+    enabled: false
+  kubernetes-service-endpoints:
+    enabled: false
+  kubernetes-pods:
+    enabled: false
+  kubernetes-pods-slow:
+    enabled: false
+  prometheus:
+    enabled: true
+    static_configs:
+      - targets:
+          - localhost:9090
+  otel-gateway:
+    static_configs:
+      - targets:
+          - gateway-collector.telemetry.svc.cluster.local:8888
+        labels:
+          collector: gateway
+  otel-gateway-slo:
+    static_configs:
+      - targets:
+          - gateway-collector.telemetry.svc.cluster.local:8889
+        labels:
+          collector: gateway
+  otel-backend:
+    static_configs:
+      - targets:
+          - backend-collector.telemetry.svc.cluster.local:8888
+        labels:
+          collector: backend
+  kafka:
+    static_configs:
+      - targets:
+          - otel-kafka-metrics.kafka.svc.cluster.local:9404
+  kafka-exporter:
+    static_configs:
+      - targets:
+          - otel-kafka-exporter.kafka.svc.cluster.local:9404
+  elasticsearch:
+    static_configs:
+      - targets:
+          - elasticsearch-exporter.telemetry.svc.cluster.local:9108
+  kube-state-metrics:
+    static_configs:
+      - targets:
+          - kube-state-metrics.observability.svc.cluster.local:8080
+  node-exporter:
+    static_configs:
+      - targets:
+          - node-exporter.observability.svc.cluster.local:9100
+  pushgateway:
+    honor_labels: true
+    static_configs:
+      - targets:
+          - pushgateway.observability.svc.cluster.local:9091
+
+serverFiles:
+  recording_rules.yml:
+    groups:
+      - name: otel-ingestion-slo
+        interval: 30s
+        rules:
+          # Event-based log SLO. The denominator is only logs with a non-negative
+          # ObservedTimestamp - Timestamp. Missing and negative durations are
+          # counted by the quality rules and are not treated as fast events.
+          - record: slo:logs_event_age:within_30s:ratio_30d
+            expr: |
+              sum(rate(otel_log_event_age_seconds_bucket{le="30",job="otel-gateway-slo"}[30d]))
+              /
+              clamp_min(sum(rate(otel_log_event_age_seconds_bucket{le="+Inf",job="otel-gateway-slo"}[30d])), 1e-12)
+          - record: slo:logs_event_age:within_30s:ratio_1h
+            expr: |
+              sum(rate(otel_log_event_age_seconds_bucket{le="30",job="otel-gateway-slo"}[1h]))
+              /
+              clamp_min(sum(rate(otel_log_event_age_seconds_bucket{le="+Inf",job="otel-gateway-slo"}[1h])), 1e-12)
+          - record: slo:logs_event_age:target
+            expr: "0.999"
+          - record: slo:logs_timestamp_quality:invalid_ratio_1h
+            expr: |
+              (
+                sum(rate(otel_log_timestamp_missing_total{job="otel-gateway-slo"}[1h]))
+                +
+                sum(rate(otel_log_timestamp_negative_total{job="otel-gateway-slo"}[1h]))
+              )
+              /
+              clamp_min(
+                sum(rate(otel_log_timestamp_missing_total{job="otel-gateway-slo"}[1h]))
+                + sum(rate(otel_log_timestamp_negative_total{job="otel-gateway-slo"}[1h]))
+                + sum(rate(otel_log_event_age_seconds_count{job="otel-gateway-slo"}[1h])),
+                1e-12
+              )
+          # Probe-based canary SLO. Each CronJob run writes a 0/1 gauge.
+          # avg_over_time approximates the fraction of probes inside the window
+          # while the job keeps its one-minute schedule. It is not the fraction
+          # of all production traces or metric points.
+          - record: slo:traces_canary:within_objective:ratio_30d
+            expr: avg_over_time(otel_canary_within_objective{signal="traces"}[30d])
+          - record: slo:metrics_canary:within_objective:ratio_30d
+            expr: avg_over_time(otel_canary_within_objective{signal="metrics"}[30d])
+          - record: slo:traces_canary:within_objective:ratio_1h
+            expr: avg_over_time(otel_canary_within_objective{signal="traces"}[1h])
+          - record: slo:metrics_canary:within_objective:ratio_1h
+            expr: avg_over_time(otel_canary_within_objective{signal="metrics"}[1h])
+          - record: slo:traces_canary:target
+            expr: "0.999"
+          - record: slo:metrics_canary:target
+            expr: "0.999"
+          - record: slo:pipeline:export_success:ratio_5m
+            expr: |
+              sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m]) + rate(otelcol_exporter_sent_spans_total[5m]) + rate(otelcol_exporter_sent_metric_points_total[5m]))
+              /
+              clamp_min(
+                sum by (collector, exporter) (
+                  rate(otelcol_exporter_sent_log_records_total[5m]) + rate(otelcol_exporter_send_failed_log_records_total[5m])
+                  + rate(otelcol_exporter_sent_spans_total[5m]) + rate(otelcol_exporter_send_failed_spans_total[5m])
+                  + rate(otelcol_exporter_sent_metric_points_total[5m]) + rate(otelcol_exporter_send_failed_metric_points_total[5m])
+                ),
+                1e-12
+              )
+          - record: kafka:consumer_lag:otel_backend
+            expr: sum by (topic) (kafka_consumergroup_lag{consumergroup="otel-backend"})

@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-kafka
+  namespace: observability
+  labels:
+    grafana_dashboard: '1'
+    app.kubernetes.io/part-of: otel-platform
+  annotations:
+    grafana_folder: OpenTelemetry
+data:
+  otel-kafka.json: '{"uid": "otel-kafka", "title": "Kafka health", "description":
+    "Single-broker KRaft health.", "tags": ["otel-platform"], "timezone": "browser",
+    "schemaVersion": 39, "version": 1, "refresh": "30s", "time": {"from": "now-1h",
+    "to": "now"}, "panels": [{"gridPos": {"h": 3, "w": 24, "x": 0, "y": 0}, "id":
+    1, "options": {"mode": "markdown", "content": "This cluster has one combined KRaft
+    broker. Replication factor is 1, so under-replicated partitions should stay at
+    zero and do not measure replica durability."}, "title": "", "type": "text"}, {"datasource":
+    {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit":
+    "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 8, "x": 0, "y": 3}, "id":
+    2, "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip":
+    {"mode": "multi"}}, "targets": [{"expr": "kafka_server_kafkaserver_brokerstate",
+    "refId": "A", "legendFormat": "state"}, {"expr": "up{job=\"kafka\"}", "refId":
+    "A", "legendFormat": "metrics up"}, {"expr": "up{job=\"kafka-exporter\"}", "refId":
+    "A", "legendFormat": "exporter up"}], "title": "Broker state", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
+    {"unit": "Bps"}, "overrides": []}, "gridPos": {"h": 8, "w": 16, "x": 8, "y": 3},
+    "id": 3, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesinpersec_total[5m]))",
+    "refId": "A", "legendFormat": "{{topic}} in"}, {"expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesoutpersec_total[5m]))",
+    "refId": "A", "legendFormat": "{{topic}} out"}], "title": "Topic bytes", "type":
+    "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
+    {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12,
+    "x": 0, "y": 11}, "id": 4, "options": {"legend": {"displayMode": "list", "placement":
+    "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (topic,
+    consumergroup) (kafka_consumergroup_lag)", "refId": "A", "legendFormat": "{{consumergroup}}
+    {{topic}}"}], "title": "Consumer group lag", "type": "timeseries"}, {"datasource":
+    {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit":
+    "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 11}, "id":
+    5, "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip":
+    {"mode": "multi"}}, "targets": [{"expr": "kafka_server_replicamanager_partitioncount",
+    "refId": "A", "legendFormat": "partitions"}, {"expr": "count by (topic) (kafka_topic_partitions{topic=~\"otel-.*\"})
+    or kafka_server_replicamanager_partitioncount", "refId": "A", "legendFormat":
+    "topic partitions"}], "title": "Partition count", "type": "timeseries"}, {"datasource":
+    {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit":
+    "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 19}, "id":
+    6, "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip":
+    {"mode": "multi"}}, "targets": [{"expr": "kafka_server_replicamanager_underreplicatedpartitions",
+    "refId": "A", "legendFormat": "under-replicated"}], "title": "Under-replicated
+    partitions", "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid":
+    "prometheus"}, "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+    "gridPos": {"h": 8, "w": 12, "x": 12, "y": 19}, "id": 7, "options": {"legend":
+    {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+    "targets": [{"expr": "sum by (topic) (kafka_log_size_bytes)", "refId": "A", "legendFormat":
+    "{{topic}}"}, {"expr": "node_filesystem_avail_bytes{mountpoint=\"/\"}", "refId":
+    "A", "legendFormat": "node free"}], "title": "Log size and node disk", "type":
+    "timeseries"}]}'
