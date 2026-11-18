@@ -1,4 +1,4 @@
-# Backend collector, contrib 0.165.1.
+# Backend collector, contrib 0.165.0.
 #
 # Kafka otlp_proto payloads keep Timestamp and ObservedTimestamp. This process
 # does not rewrite them. data_stream attributes select the Elasticsearch data

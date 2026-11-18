@@ -59,7 +59,7 @@ check_stream traces-otel.otel-prod "${2:-}"
 check_stream metrics-otel.otel-prod "${3:-}"
 
 if [[ "${fail}" -ne 0 ]]; then
-  echo "One or more signals are not searchable yet. Data stream names follow the collector 0.165.1 otel mapping: <type>-otel.otel-prod." >&2
+  echo "One or more signals are not searchable yet. Data stream names follow the collector 0.165.0 otel mapping: <type>-otel.otel-prod." >&2
   exit 1
 fi
 
