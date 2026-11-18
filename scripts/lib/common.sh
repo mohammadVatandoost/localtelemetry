@@ -10,7 +10,7 @@ GIT_IMAGE="${GIT_IMAGE:-alpine/git:2.54.1}"
 GIT_PORT="${GIT_PORT:-9418}"
 ARGOCD_VERSION="${ARGOCD_VERSION:-v3.6.1}"
 ARGOCD_CHART_VERSION="${ARGOCD_CHART_VERSION:-10.18.1}"
-REPO_URL="${REPO_URL:-git://git.argocd.svc.cluster.local/otel-platform}"
+REPO_URL="${REPO_URL:-https://github.com/mohammadVatandoost/localtelemetry}"
 
 log() { printf '==> %s\n' "$*"; }
 warn() { printf 'warning: %s\n' "$*" >&2; }

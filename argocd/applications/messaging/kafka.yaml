@@ -11,7 +11,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git://git.argocd.svc.cluster.local/otel-platform
+    repoURL: https://github.com/mohammadVatandoost/localtelemetry
     targetRevision: HEAD
     path: platform/messaging/kafka
   destination:

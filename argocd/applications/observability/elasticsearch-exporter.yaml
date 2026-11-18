@@ -17,7 +17,7 @@ spec:
       helm:
         valueFiles:
           - $values/platform/observability/elasticsearch-exporter/values.yaml
-    - repoURL: git://git.argocd.svc.cluster.local/otel-platform
+    - repoURL: https://github.com/mohammadVatandoost/localtelemetry
       targetRevision: HEAD
       ref: values
   destination:

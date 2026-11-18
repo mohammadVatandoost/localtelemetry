@@ -117,7 +117,7 @@ That script is safe to run again. It creates the Kind cluster if needed, commits
 
 `scripts/install-argocd.sh` runs `terraform apply` in `terraform/argocd`. The release is the `argo-cd` chart 10.18.1 (Argo CD 3.6.1). State stays on this machine in `terraform/argocd/terraform.tfstate` and is not committed. `scripts/delete-cluster.sh` deletes that state with the cluster, so the next bootstrap installs Argo CD again.
 
-The git daemon is plain `git://` and is only for this laptop. A later environment should point every Application `repoURL` at your real remote. Search for `git://git.argocd.svc.cluster.local/otel-platform`.
+The git daemon is plain `git://` and is only for this laptop. A later environment should point every Application `repoURL` at your real remote. Search for `https://github.com/mohammadVatandoost/localtelemetry`.
 
 ```bash
 kubectl get applications -n argocd
