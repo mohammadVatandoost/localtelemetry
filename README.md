@@ -51,7 +51,7 @@ Gateway collector (4317 gRPC, 4318 HTTP)
 | Argo CD | 3.6.1, Helm chart argo-cd 10.18.1 |
 | Strimzi | 1.3.1, Kafka 4.3.2, KRaft |
 | ECK | 3.5.0 |
-| Elasticsearch and Kibana | 9.4.3 |
+| Elasticsearch and Kibana | 9.5.6 |
 | Collector contrib | 0.165.0 |
 | Prometheus chart | 29.47.2 |
 | Grafana chart | 14.5.0 |

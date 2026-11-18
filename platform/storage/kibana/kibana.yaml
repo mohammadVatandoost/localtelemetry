@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: kibana
     app.kubernetes.io/part-of: otel-platform
 spec:
-  version: 9.4.3
+  version: 9.5.6
   count: 1
   elasticsearchRef:
     name: otel
