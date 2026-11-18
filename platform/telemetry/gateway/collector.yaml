@@ -6,9 +6,46 @@ metadata:
     app.kubernetes.io/name: gateway-collector
     app.kubernetes.io/part-of: otel-platform
 ---
+# kubeletstats reads nodes/stats. k8sattributes reads pods and replica sets
+# so Kafka and Grafana logs keep their deployment name.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gateway-collector
+  labels:
+    app.kubernetes.io/name: gateway-collector
+    app.kubernetes.io/part-of: otel-platform
+rules:
+  - apiGroups: [""]
+    resources: ["nodes/stats"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["pods", "namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gateway-collector
+  labels:
+    app.kubernetes.io/name: gateway-collector
+    app.kubernetes.io/part-of: otel-platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: gateway-collector
+subjects:
+  - kind: ServiceAccount
+    name: gateway-collector
+    namespace: telemetry
+---
 # One gateway on every node, including the control-plane. Each pod receives
-# OTLP for that node and exports to Kafka. The backend stays one Deployment:
-# each topic has one partition, so extra consumers do not add throughput.
+# OTLP, tails Kafka and Grafana logs on that node, and reads that node's
+# kubelet pod metrics. The backend stays one Deployment: each topic has one
+# partition, so extra consumers do not add throughput.
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -40,10 +77,12 @@ spec:
         - key: node-role.kubernetes.io/master
           operator: Exists
           effect: NoSchedule
+      # Pod log files on the node are mode 0640 and owned by root. Group 0 can
+      # read them. The user stays 10001.
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
-        runAsGroup: 10001
+        runAsGroup: 0
         fsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
@@ -67,14 +106,22 @@ spec:
               containerPort: 13133
           env:
             - name: GOMEMLIMIT
-              value: 200MiB
+              value: 300MiB
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: K8S_NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           resources:
             requests:
               cpu: 100m
-              memory: 128Mi
+              memory: 192Mi
             limits:
               cpu: 500m
-              memory: 256Mi
+              memory: 384Mi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -101,6 +148,9 @@ spec:
               readOnly: true
             - name: storage
               mountPath: /var/lib/otelcol
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
       volumes:
         - name: config
           configMap:
@@ -108,6 +158,10 @@ spec:
         - name: storage
           emptyDir:
             sizeLimit: 512Mi
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+            type: Directory
 ---
 # NodePort is only for the two OTLP ports. Every port on a NodePort Service
 # receives a nodePort, and Kubernetes handed 30920 to the SLO port. That is the

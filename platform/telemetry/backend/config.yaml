@@ -47,6 +47,16 @@ receivers:
       multiplier: 1.5
       randomization_factor: 0.5
       max_elapsed_time: 0s
+  # Broker JMX, one scrape from this single replica. The gateway is a DaemonSet,
+  # so a scrape there would send the same Kafka metrics three times.
+  prometheus/kafka:
+    config:
+      scrape_configs:
+        - job_name: kafka
+          scrape_interval: 30s
+          static_configs:
+            - targets:
+                - otel-kafka-metrics.kafka.svc.cluster.local:9404
 
 processors:
   memory_limiter:
@@ -86,8 +96,10 @@ processors:
 
 exporters:
   elasticsearch:
+    # The certificate covers otel-es-http.telemetry.svc. The cluster.local name
+    # is not a SAN, so TLS verification failed and every bulk request was dropped.
     endpoints:
-      - https://otel-es-http.telemetry.svc.cluster.local:9200
+      - https://otel-es-http.telemetry.svc:9200
     user: elastic
     password: ${env:ELASTIC_PASSWORD}
     tls:
@@ -143,5 +155,9 @@ service:
       exporters: [elasticsearch]
     metrics:
       receivers: [kafka]
+      processors: [memory_limiter, transform/elastic, batch]
+      exporters: [elasticsearch]
+    metrics/kafka:
+      receivers: [prometheus/kafka]
       processors: [memory_limiter, transform/elastic, batch]
       exporters: [elasticsearch]

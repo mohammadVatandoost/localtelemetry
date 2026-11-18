@@ -30,6 +30,8 @@ Signals:
 
 ```text
 OTLP logs, traces, metrics
+Kafka and Grafana container logs
+Pod and container usage from the local kubelet
         |
         v
 Gateway collector, one pod per node (4317 gRPC, 4318 HTTP)
@@ -37,6 +39,7 @@ Gateway collector, one pod per node (4317 gRPC, 4318 HTTP)
         +-- otel-logs     --+
         +-- otel-traces   --+--> Kafka --> Backend collector
         +-- otel-metrics  --+         |
+                                      +-- Kafka broker metrics, scraped once
                                       v
                               logs-otel.otel-prod
                               traces-otel.otel-prod
@@ -271,13 +274,13 @@ Requests are what the scheduler uses. Limits are higher so a short burst does no
 | ECK operator | 100m | 256Mi | 512Mi | |
 | Elasticsearch | 500m | 2Gi | 2Gi | ECK sets the heap to about half of 2Gi |
 | Kibana | 500m | 1Gi | 2Gi | Node heap 1536Mi. 1Gi aborted during startup |
-| Gateway | 300m | 384Mi | 768Mi | DaemonSet, one pod on each of 3 nodes. Memory limiter 200Mi |
+| Gateway | 300m | 576Mi | 1152Mi | DaemonSet, one pod on each of 3 nodes. Memory limiter 300Mi. Tails Kafka and Grafana logs and reads kubelet pod metrics |
 | Backend | 100m | 128Mi | 256Mi | One replica. Topics have one partition |
 | Prometheus | 200m | 1Gi | 2Gi | 30 day retention, 10Gi disk |
 | Grafana | 200m | 512Mi | 1Gi | 256Mi was OOMKilled |
 | Elasticsearch exporter, kube-state-metrics, node-exporter, pushgateway | 85m | 192Mi | 384Mi | |
 
-Steady requests are about **3.2 CPU** and **8.6 GiB**. Each Kind node also reserves 512Mi for kubelet and 512Mi for the system, and the control-plane pods need roughly another 1 GiB. Plan on 14 GiB free.
+Steady requests are about **3.2 CPU** and **8.8 GiB**. Each Kind node also reserves 512Mi for kubelet and 512Mi for the system, and the control-plane pods need roughly another 1 GiB. Plan on 14 GiB free.
 
 The gateway is a DaemonSet, so it runs once per node. The backend replica count is `spec.replicas` and stays 1 while each Kafka topic has one partition. Kafka replica count is the node pool `replicas`, which must stay 1 unless you also raise topic replication. Elasticsearch node count is `nodeSets.count`.
 
@@ -289,6 +292,7 @@ Collector queues use emptyDir, so each DaemonSet pod has its own disk. They do n
 - Kafka or Elasticsearch stuck in `Progressing`: `kubectl describe kafka otel -n kafka` and `kubectl describe elasticsearch otel -n telemetry`. The usual cause on Kind is the StorageClass not being ready yet, or not enough memory.
 - Collector not Ready: the health port returns 503 while Kafka or Elasticsearch is failing. Liveness is TCP, so the pod stays up and retries. `kubectl logs -n telemetry daemonset/gateway-collector` and `kubectl logs -n telemetry deploy/backend-collector`.
 - Empty Grafana panels: in Prometheus, look for `otelcol_receiver_accepted_log_records_total` and `otel_log_event_age_seconds_bucket`. Names follow collector 0.165.0 with Prometheus type and unit suffixes enabled.
+- Elasticsearch has no `logs-otel.otel-prod` stream: the backend must call `https://otel-es-http.telemetry.svc:9200`. The certificate does not include the `cluster.local` name, and the exporter drops the bulk request. Kafka and Grafana container logs are tailed from `/var/log/pods` after the gateway starts. Pod usage comes from the local kubelet, and Kafka broker metrics are scraped by the backend from `otel-kafka-metrics`.
 - Elasticsearch stays `ApplyingChanges` and the backend, exporter, ILM, and canary stay `ContainerCreating`: another Service already owns NodePort 30920, so ECK never creates `otel-es-http` or `otel-es-http-certs-public`. Gateway metrics are a ClusterIP Service so they cannot take that port.
 - Gateway `ImagePullBackOff`: the image tag is not on Docker Hub. The published release is `otel/opentelemetry-collector-contrib:0.165.0`.
 - Grafana `CreateContainerConfigError` for secret `grafana-admin`: the secret is created by `scripts/create-secrets.sh` or by Job `grafana-admin-secret-create`. It is not stored in Git.
