@@ -53,8 +53,8 @@ warn_memory() {
   if [[ -r /proc/meminfo ]]; then
     local available_kb
     available_kb="$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)"
-    if [[ -n "${available_kb}" && "${available_kb}" -lt 10485760 ]]; then
-      warn "Less than 10 GiB of memory is available ($((available_kb / 1024)) MiB). The platform requests about 6 GiB plus Kubernetes itself. Free memory before bootstrap if pods stay Pending."
+    if [[ -n "${available_kb}" && "${available_kb}" -lt 14680064 ]]; then
+      warn "Less than 14 GiB of memory is available ($((available_kb / 1024)) MiB). The platform requests about 9 GiB plus three Kind nodes. Free memory before bootstrap if pods stay Pending."
     fi
   fi
 }

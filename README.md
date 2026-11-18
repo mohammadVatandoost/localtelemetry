@@ -8,7 +8,7 @@ The repository directory was empty, so this is the apps-of-apps layout. Nothing 
 Local Ubuntu
     |
     v
-Kind cluster otel-platform (one node)
+Kind cluster otel-platform (1 control-plane + 2 workers)
     |
     v
 Argo CD  <---- git daemon on the Kind network
@@ -32,7 +32,7 @@ Signals:
 OTLP logs, traces, metrics
         |
         v
-Gateway collector (4317 gRPC, 4318 HTTP)
+Gateway collector, one pod per node (4317 gRPC, 4318 HTTP)
         |
         +-- otel-logs     --+
         +-- otel-traces   --+--> Kafka --> Backend collector
@@ -63,7 +63,7 @@ Kubernetes 1.34 is used because Strimzi 1.3 supports 1.32–1.37 and ECK 3.5 sup
 ## Prerequisites
 
 - Ubuntu with Docker Engine, kind 0.33.x, kubectl 1.32+, Terraform 1.5+, git, curl, and python3.
-- About 12 GiB of free memory. Steady requests are about 8.3 GiB plus the Kind control plane. This machine should have that much free before you bootstrap. A host that is already using most of 32 GiB will leave pods Pending.
+- About 14 GiB of free memory. Steady requests are about 8.6 GiB, and the two worker nodes add their own kubelets. This machine should have that much free before you bootstrap. A host that is already using most of 32 GiB will leave pods Pending.
 - Helm and the `argocd` CLI are optional. Terraform installs Argo CD. Argo CD renders the other charts. The scripts tell you when a required command is missing.
 
 ## Repository layout
@@ -90,7 +90,7 @@ Extra Applications beyond the suggested tree are there because the cluster needs
 
 ## Port mappings
 
-Kind forwards these host ports to NodePorts on the single node.
+Kind forwards these host ports to NodePorts on the control-plane node. The workers are not published on the laptop. kube-proxy still sends that traffic to pods on any node.
 
 | Host | NodePort | Service |
 |---|---:|---|
@@ -114,6 +114,13 @@ scripts/bootstrap.sh
 ```
 
 That script is safe to run again. It creates the Kind cluster if needed, commits local manifest changes so Argo CD can see them, starts a git daemon on the Kind Docker network, installs Argo CD with Terraform, and applies `argocd/root-app.yaml`.
+
+`scripts/create-cluster.sh` leaves an existing cluster as it is. Kind cannot add the two workers to a cluster that was created with one node. Delete it first, then bootstrap:
+
+```bash
+scripts/delete-cluster.sh
+scripts/bootstrap.sh
+```
 
 `scripts/install-argocd.sh` runs `terraform apply` in `terraform/argocd`. The release is the `argo-cd` chart 10.18.1 (Argo CD 3.6.1). State stays on this machine in `terraform/argocd/terraform.tfstate` and is not committed. `scripts/delete-cluster.sh` deletes that state with the cluster, so the next bootstrap installs Argo CD again.
 
@@ -172,7 +179,7 @@ scripts/verify-elasticsearch.sh <log-id> <trace-id> <metric-id>
 Collector metrics:
 
 ```bash
-kubectl -n telemetry port-forward svc/gateway-collector-metrics 8888:8888
+kubectl -n telemetry port-forward ds/gateway-collector 8888:8888
 curl -s localhost:8888/metrics | head
 ```
 
@@ -257,22 +264,23 @@ Requests are what the scheduler uses. Limits are higher so a short burst does no
 | ECK operator | 100m | 256Mi | 512Mi | |
 | Elasticsearch | 500m | 2Gi | 2Gi | ECK sets the heap to about half of 2Gi |
 | Kibana | 500m | 1Gi | 2Gi | Node heap 1536Mi. 1Gi aborted during startup |
-| Gateway and backend | 200m | 256Mi | 512Mi | One replica each. Memory limiter at 200Mi |
+| Gateway | 300m | 384Mi | 768Mi | DaemonSet, one pod on each of 3 nodes. Memory limiter 200Mi |
+| Backend | 100m | 128Mi | 256Mi | One replica. Topics have one partition |
 | Prometheus | 200m | 1Gi | 2Gi | 30 day retention, 10Gi disk |
 | Grafana | 200m | 512Mi | 1Gi | 256Mi was OOMKilled |
 | Elasticsearch exporter, kube-state-metrics, node-exporter, pushgateway | 85m | 192Mi | 384Mi | |
 
-Steady requests are about **3.0 CPU** and **8.3 GiB**. Kind also reserves 512Mi for kubelet and 512Mi for the system, and the control-plane pods need roughly another 1 GiB. Plan on 12 GiB free.
+Steady requests are about **3.2 CPU** and **8.6 GiB**. Each Kind node also reserves 512Mi for kubelet and 512Mi for the system, and the control-plane pods need roughly another 1 GiB. Plan on 14 GiB free.
 
-Collector replica count is `spec.replicas` on each Deployment. Kafka replica count is the node pool `replicas`, which must stay 1 unless you also raise topic replication. Elasticsearch node count is `nodeSets.count`.
+The gateway is a DaemonSet, so it runs once per node. The backend replica count is `spec.replicas` and stays 1 while each Kafka topic has one partition. Kafka replica count is the node pool `replicas`, which must stay 1 unless you also raise topic replication. Elasticsearch node count is `nodeSets.count`.
 
-Collector queues use emptyDir so a second replica does not share a ReadWriteOnce volume. Raise `replicas` only after giving each pod its own disk if you need the queue to survive reschedule.
+Collector queues use emptyDir, so each DaemonSet pod has its own disk. They do not share a ReadWriteOnce volume.
 
 ## Troubleshooting
 
 - Application `ComparisonError` or missing CRD: wait. The Application retries. `kubectl get applications -n argocd` should move to `Synced` / `Healthy`.
 - Kafka or Elasticsearch stuck in `Progressing`: `kubectl describe kafka otel -n kafka` and `kubectl describe elasticsearch otel -n telemetry`. The usual cause on Kind is the StorageClass not being ready yet, or not enough memory.
-- Collector not Ready: the health port returns 503 while Kafka or Elasticsearch is failing. Liveness is TCP, so the pod stays up and retries. `kubectl logs -n telemetry deploy/gateway-collector`.
+- Collector not Ready: the health port returns 503 while Kafka or Elasticsearch is failing. Liveness is TCP, so the pod stays up and retries. `kubectl logs -n telemetry daemonset/gateway-collector` and `kubectl logs -n telemetry deploy/backend-collector`.
 - Empty Grafana panels: in Prometheus, look for `otelcol_receiver_accepted_log_records_total` and `otel_log_event_age_seconds_bucket`. Names follow collector 0.165.0 with Prometheus type and unit suffixes enabled.
 - Elasticsearch stays `ApplyingChanges` and the backend, exporter, ILM, and canary stay `ContainerCreating`: another Service already owns NodePort 30920, so ECK never creates `otel-es-http` or `otel-es-http-certs-public`. Gateway metrics are a ClusterIP Service so they cannot take that port.
 - Gateway `ImagePullBackOff`: the image tag is not on Docker Hub. The published release is `otel/opentelemetry-collector-contrib:0.165.0`.

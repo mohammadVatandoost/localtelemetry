@@ -6,18 +6,24 @@ metadata:
     app.kubernetes.io/name: gateway-collector
     app.kubernetes.io/part-of: otel-platform
 ---
+# One gateway on every node, including the control-plane. Each pod receives
+# OTLP for that node and exports to Kafka. The backend stays one Deployment:
+# each topic has one partition, so extra consumers do not add throughput.
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: gateway-collector
   labels:
     app.kubernetes.io/name: gateway-collector
     app.kubernetes.io/part-of: otel-platform
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: gateway-collector
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
   template:
     metadata:
       labels:
@@ -27,6 +33,13 @@ spec:
     spec:
       serviceAccountName: gateway-collector
       terminationGracePeriodSeconds: 40
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001

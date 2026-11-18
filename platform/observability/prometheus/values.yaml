@@ -75,18 +75,36 @@ scrapeConfigs:
     static_configs:
       - targets:
           - localhost:9090
+  # Pod discovery, not the Service. A Service scrape would hit one DaemonSet
+  # pod per interval and mix histogram series from different nodes.
   otel-gateway:
-    static_configs:
-      - targets:
-          - gateway-collector-metrics.telemetry.svc.cluster.local:8888
-        labels:
-          collector: gateway
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: keep
+        regex: gateway-collector
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: metrics
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        target_label: node
+      - target_label: collector
+        replacement: gateway
   otel-gateway-slo:
-    static_configs:
-      - targets:
-          - gateway-collector-metrics.telemetry.svc.cluster.local:8889
-        labels:
-          collector: gateway
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: keep
+        regex: gateway-collector
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: slo
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        target_label: node
+      - target_label: collector
+        replacement: gateway
   otel-backend:
     static_configs:
       - targets:
