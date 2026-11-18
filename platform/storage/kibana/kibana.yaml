@@ -28,10 +28,14 @@ spec:
     spec:
       containers:
         - name: kibana
+          env:
+            # 1Gi aborted Node during startup (heap ~750Mi). 1536 stays inside the 2Gi limit.
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=1536"
           resources:
             requests:
-              cpu: 100m
-              memory: 512Mi
-            limits:
               cpu: 500m
               memory: 1Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi

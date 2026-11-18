@@ -17,29 +17,29 @@ configs:
 controller:
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
+      cpu: 250m
       memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
 
 repoServer:
   resources:
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 200m
+      memory: 512Mi
     limits:
-      cpu: 500m
-      memory: 384Mi
+      cpu: "1"
+      memory: 1Gi
 
 server:
   resources:
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 200m
+      memory: 512Mi
     limits:
-      cpu: 300m
-      memory: 256Mi
+      cpu: "1"
+      memory: 1Gi
   service:
     type: NodePort
     nodePortHttp: 30080
@@ -47,11 +47,11 @@ server:
 redis:
   resources:
     requests:
-      cpu: 25m
-      memory: 64Mi
-    limits:
-      cpu: 200m
+      cpu: 50m
       memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
 
 dex:
   enabled: false

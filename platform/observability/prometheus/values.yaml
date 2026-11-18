@@ -47,11 +47,11 @@ server:
     storageClass: local-path
   resources:
     requests:
-      cpu: 100m
-      memory: 512Mi
-    limits:
-      cpu: 500m
+      cpu: 200m
       memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 2Gi
   extraFlags:
     - web.enable-lifecycle
 

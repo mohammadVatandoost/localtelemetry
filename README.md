@@ -63,7 +63,7 @@ Kubernetes 1.34 is used because Strimzi 1.3 supports 1.32–1.37 and ECK 3.5 sup
 ## Prerequisites
 
 - Ubuntu with Docker Engine, kind 0.33.x, kubectl 1.32+, Terraform 1.5+, git, curl, and python3.
-- About 10 GiB of free memory. Steady requests are about 5.8 GiB plus the Kind control plane. This machine should have that much free before you bootstrap. A host that is already using most of 32 GiB will leave pods Pending.
+- About 12 GiB of free memory. Steady requests are about 8.3 GiB plus the Kind control plane. This machine should have that much free before you bootstrap. A host that is already using most of 32 GiB will leave pods Pending.
 - Helm and the `argocd` CLI are optional. Terraform installs Argo CD. Argo CD renders the other charts. The scripts tell you when a required command is missing.
 
 ## Repository layout
@@ -248,7 +248,7 @@ Requests are what the scheduler uses. Limits are higher so a short burst does no
 
 | Component | CPU request | Memory request | Memory limit | Note |
 |---|---:|---:|---:|---|
-| Argo CD, four processes | 225m | 512Mi | 1280Mi | Dex and notifications are not installed. ApplicationSet stays at 0 replicas |
+| Argo CD, four processes | 700m | 1664Mi | 3328Mi | Dex and notifications are not installed. ApplicationSet stays at 0 replicas |
 | local-path provisioner | 20m | 32Mi | 128Mi | Required. Kind has no StorageClass |
 | Strimzi operator | 100m | 384Mi | 512Mi | Chart default is 384Mi. 256Mi is too small for this JVM |
 | Kafka broker | 250m | 768Mi | 1536Mi | Heap 384Mi |
@@ -256,13 +256,13 @@ Requests are what the scheduler uses. Limits are higher so a short burst does no
 | Kafka exporter | 25m | 64Mi | 128Mi | Consumer lag |
 | ECK operator | 100m | 256Mi | 512Mi | |
 | Elasticsearch | 500m | 2Gi | 2Gi | ECK sets the heap to about half of 2Gi |
-| Kibana | 100m | 512Mi | 1Gi | |
+| Kibana | 500m | 1Gi | 2Gi | Node heap 1536Mi. 1Gi aborted during startup |
 | Gateway and backend | 200m | 256Mi | 512Mi | One replica each. Memory limiter at 200Mi |
-| Prometheus | 100m | 512Mi | 1Gi | 30 day retention, 10Gi disk |
-| Grafana | 50m | 128Mi | 256Mi | |
+| Prometheus | 200m | 1Gi | 2Gi | 30 day retention, 10Gi disk |
+| Grafana | 200m | 512Mi | 1Gi | 256Mi was OOMKilled |
 | Elasticsearch exporter, kube-state-metrics, node-exporter, pushgateway | 85m | 192Mi | 384Mi | |
 
-Steady requests are about **1.9 CPU** and **5.8 GiB**. Kind also reserves 512Mi for kubelet and 512Mi for the system, and the control-plane pods need roughly another 1 GiB. Plan on 10 GiB free.
+Steady requests are about **3.0 CPU** and **8.3 GiB**. Kind also reserves 512Mi for kubelet and 512Mi for the system, and the control-plane pods need roughly another 1 GiB. Plan on 12 GiB free.
 
 Collector replica count is `spec.replicas` on each Deployment. Kafka replica count is the node pool `replicas`, which must stay 1 unless you also raise topic replication. Elasticsearch node count is `nodeSets.count`.
 
