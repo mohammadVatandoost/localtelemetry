@@ -26,8 +26,8 @@ data:
     {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
     {"unit": "Bps"}, "overrides": []}, "gridPos": {"h": 8, "w": 16, "x": 8, "y": 3},
     "id": 3, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
-    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesinpersec_total[5m]))",
-    "refId": "A", "legendFormat": "{{topic}} in"}, {"expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesoutpersec_total[5m]))",
+    "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesin_total[5m]))",
+    "refId": "A", "legendFormat": "{{topic}} in"}, {"expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesout_total[5m]))",
     "refId": "A", "legendFormat": "{{topic}} out"}], "title": "Topic bytes", "type":
     "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
     {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12,
@@ -51,7 +51,7 @@ data:
     "prometheus"}, "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
     "gridPos": {"h": 8, "w": 12, "x": 12, "y": 19}, "id": 7, "options": {"legend":
     {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
-    "targets": [{"expr": "sum by (topic) (kafka_log_size_bytes)", "refId": "A", "legendFormat":
+    "targets": [{"expr": "sum by (topic) (kafka_log_log_size)", "refId": "A", "legendFormat":
     "{{topic}}"}, {"expr": "node_filesystem_avail_bytes{mountpoint=\"/\"}", "refId":
     "A", "legendFormat": "node free"}], "title": "Log size and node disk", "type":
     "timeseries"}]}'

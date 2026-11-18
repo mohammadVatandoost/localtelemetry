@@ -96,7 +96,7 @@ Kind forwards these host ports to NodePorts on the control-plane node. The worke
 |---|---:|---|
 | 8080 | 30080 | Argo CD HTTP |
 | 3000 | 30300 | Grafana |
-| 5601 | 30601 | Kibana HTTPS |
+| 5601 | 30601 | Kibana HTTP |
 | 9200 | 30920 | Elasticsearch HTTPS |
 | 4317 | 30317 | Gateway OTLP gRPC |
 | 4318 | 30318 | Gateway OTLP HTTP |
@@ -149,7 +149,7 @@ Grafana: http://localhost:3000
 
 User `admin`. The password is not in Git. `scripts/create-secrets.sh` creates secret `grafana-admin` before the root application, and the `grafana-admin-secret-create` Job creates the same secret if that script did not run. The script copies the password to `.secrets/grafana-admin.txt` when it creates the secret.
 
-Kibana: https://localhost:5601
+Kibana: http://localhost:5601
 
 Elasticsearch: https://localhost:9200
 
@@ -159,7 +159,7 @@ ECK creates the password after Elasticsearch is healthy. User `elastic`.
 kubectl -n telemetry get secret otel-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d; echo
 ```
 
-Both UIs use a cluster-local certificate. Accept the browser warning, or trust the CA from `otel-es-http-certs-public`.
+Kibana serves HTTP on this port. Elasticsearch uses a cluster-local certificate. Accept the browser warning, or trust the CA from `otel-es-http-certs-public`.
 
 No password is stored in Git. Grafana's password is a Secret created at bootstrap. Elasticsearch's password and CA are Secrets created by ECK. Replacing that with an external secret store later means pointing the backend collector and the exporter at the new Secret names (`otel-es-elastic-user` key `elastic`, `otel-es-http-certs-public` key `ca.crt`).
 
@@ -248,6 +248,13 @@ Grafana folder **OpenTelemetry**:
 3. Kafka health
 4. Elasticsearch health
 5. Ingestion SLO
+
+Grafana folder **Strimzi**, from the Strimzi 1.3.1 dashboards for the components this cluster runs:
+
+1. Strimzi Kafka
+2. Strimzi Kafka Exporter
+3. Strimzi KRaft
+4. Strimzi Operators
 
 ## Resource requests
 

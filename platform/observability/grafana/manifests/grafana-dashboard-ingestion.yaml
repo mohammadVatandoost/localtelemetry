@@ -28,8 +28,8 @@ data:
     "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides":
     []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 3}, "id": 3, "options": {"legend":
     {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
-    "targets": [{"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesinpersec_total[5m]))",
-    "refId": "A", "legendFormat": "bytes in"}, {"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesoutpersec_total[5m]))",
+    "targets": [{"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesin_total[5m]))",
+    "refId": "A", "legendFormat": "bytes in"}, {"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesout_total[5m]))",
     "refId": "A", "legendFormat": "bytes out"}], "title": "Kafka bytes in and out",
     "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
     "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h":

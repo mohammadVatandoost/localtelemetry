@@ -34,7 +34,7 @@ nodes:
       - containerPort: 30300
         hostPort: 3000
         protocol: TCP
-      # Kibana HTTPS. Open https://localhost:5601
+      # Kibana HTTP. Open http://localhost:5601
       - containerPort: 30601
         hostPort: 5601
         protocol: TCP

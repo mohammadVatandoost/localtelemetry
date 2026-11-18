@@ -55,15 +55,15 @@ server:
   extraFlags:
     - web.enable-lifecycle
 
-# Default Kubernetes service discovery is off. It is large for a one-node lab
-# and is not required to watch the ingestion path.
+# API and unfiltered pod discovery stay off. Kubelet and cAdvisor stay on
+# because the Strimzi KRaft dashboard queries container and volume metrics.
 scrapeConfigs:
   kubernetes-api-servers:
     enabled: false
   kubernetes-nodes:
-    enabled: false
+    enabled: true
   kubernetes-nodes-cadvisor:
-    enabled: false
+    enabled: true
   kubernetes-service-endpoints:
     enabled: false
   kubernetes-pods:
@@ -111,14 +111,72 @@ scrapeConfigs:
           - backend-collector.telemetry.svc.cluster.local:8888
         labels:
           collector: backend
+  # Pod discovery keeps strimzi_io_cluster, namespace, and kubernetes_pod_name.
+  # The official Strimzi dashboards select on those labels. A Service target
+  # does not have them, and Strimzi does not create otel-kafka-exporter.
   kafka:
-    static_configs:
-      - targets:
-          - otel-kafka-metrics.kafka.svc.cluster.local:9404
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_strimzi_io_kind]
+        action: keep
+        regex: Kafka
+      - source_labels: [__meta_kubernetes_pod_label_strimzi_io_component_type]
+        action: keep
+        regex: kafka
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: tcp-prometheus
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(strimzi_io_.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: kubernetes_pod_name
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        target_label: node_name
   kafka-exporter:
-    static_configs:
-      - targets:
-          - otel-kafka-exporter.kafka.svc.cluster.local:9404
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_strimzi_io_component_type]
+        action: keep
+        regex: kafka-exporter
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: tcp-prometheus
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(strimzi_io_.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: kubernetes_pod_name
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        target_label: node_name
+  strimzi-operator:
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_strimzi_io_kind]
+        action: keep
+        regex: cluster-operator
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: http
+      - source_labels: [__meta_kubernetes_pod_container_name]
+        target_label: container
+  strimzi-entity-operator:
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: keep
+        regex: entity-operator
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: healthcheck-(to|uo)
+      - source_labels: [__meta_kubernetes_pod_container_name]
+        target_label: container
   elasticsearch:
     static_configs:
       - targets:

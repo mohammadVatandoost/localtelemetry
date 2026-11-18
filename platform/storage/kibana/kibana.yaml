@@ -11,12 +11,18 @@ spec:
   count: 1
   elasticsearchRef:
     name: otel
+  # HTTP, not the ECK self-signed certificate. https://localhost:5601 speaks TLS,
+  # so http://localhost:5601 gets an empty response (Chrome ERR_EMPTY_RESPONSE).
+  # Kibana still uses TLS for its connection to Elasticsearch.
   http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
     service:
       spec:
         type: NodePort
         ports:
-          - name: https
+          - name: http
             port: 5601
             nodePort: 30601
             protocol: TCP
