@@ -51,7 +51,7 @@ Gateway collector (4317 gRPC, 4318 HTTP)
 | Argo CD | 3.6.1, Helm chart argo-cd 10.18.1 |
 | Strimzi | 1.3.1, Kafka 4.3.2, KRaft |
 | ECK | 3.5.0 |
-| Elasticsearch and Kibana | 9.4.3 |
+| Elasticsearch and Kibana | 9.5.6 |
 | Collector contrib | 0.165.0 |
 | Prometheus chart | 29.47.2 |
 | Grafana chart | 14.5.0 |
@@ -140,7 +140,7 @@ User `admin`.
 
 Grafana: http://localhost:3000
 
-User `admin`. The password is not in Git. `scripts/create-secrets.sh` creates secret `grafana-admin` before the root application, and the `grafana-admin-secret` Job creates the same secret if that script did not run. The script copies the password to `.secrets/grafana-admin.txt` when it creates the secret.
+User `admin`. The password is not in Git. `scripts/create-secrets.sh` creates secret `grafana-admin` before the root application, and the `grafana-admin-secret-create` Job creates the same secret if that script did not run. The script copies the password to `.secrets/grafana-admin.txt` when it creates the secret.
 
 Kibana: https://localhost:5601
 
@@ -276,7 +276,8 @@ Collector queues use emptyDir so a second replica does not share a ReadWriteOnce
 - Empty Grafana panels: in Prometheus, look for `otelcol_receiver_accepted_log_records_total` and `otel_log_event_age_seconds_bucket`. Names follow collector 0.165.0 with Prometheus type and unit suffixes enabled.
 - Elasticsearch stays `ApplyingChanges` and the backend, exporter, ILM, and canary stay `ContainerCreating`: another Service already owns NodePort 30920, so ECK never creates `otel-es-http` or `otel-es-http-certs-public`. Gateway metrics are a ClusterIP Service so they cannot take that port.
 - Gateway `ImagePullBackOff`: the image tag is not on Docker Hub. The published release is `otel/opentelemetry-collector-contrib:0.165.0`.
-- Grafana `CreateContainerConfigError` for secret `grafana-admin`: the secret is created by `scripts/create-secrets.sh` or by Job `grafana-admin-secret`. It is not stored in Git.
+- Grafana `CreateContainerConfigError` for secret `grafana-admin`: the secret is created by `scripts/create-secrets.sh` or by Job `grafana-admin-secret-create`. It is not stored in Git.
+- curl Jobs stay in `CreateContainerConfigError` with `non-numeric user (curl_user)`: `curlimages/curl:8.16.0` names its user instead of setting uid 101. The pod security context must set `runAsUser: 101`.
 - Prometheus stays `Progressing` with no node-exporter pod: the observability namespace must allow privileged pods. node-exporter needs host namespaces and hostPath, which baseline rejects.
 - Elasticsearch rejects documents: `kubectl logs -n telemetry deploy/backend-collector`. Mapping mode is forced to `otel`. Streams appear after the first successful bulk request.
 - Git changes never sync: they are uncommitted, or the git container was removed. Run `scripts/bootstrap.sh`.

@@ -54,7 +54,8 @@ metadata:
     app.kubernetes.io/part-of: otel-platform
 spec:
   schedule: "*/15 * * * *"
-  concurrencyPolicy: Forbid
+  # Replace a run that never started, otherwise one stuck Job blocks every later run.
+  concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
   jobTemplate:
@@ -69,6 +70,10 @@ spec:
           restartPolicy: OnFailure
           securityContext:
             runAsNonRoot: true
+            # curlimages/curl:8.16.0 sets User to the name curl_user (uid 101).
+            # kubelet will not start the container unless the uid is numeric.
+            runAsUser: 101
+            runAsGroup: 102
             seccompProfile:
               type: RuntimeDefault
           containers:
