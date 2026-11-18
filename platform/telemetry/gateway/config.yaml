@@ -1,4 +1,4 @@
-# Gateway collector, contrib 0.165.1.
+# Gateway collector, contrib 0.165.0.
 #
 # Logs pipeline adds transform/observe and the signaltometrics connector.
 # transform/observe fills a zero ObservedTimestamp at this process and does not

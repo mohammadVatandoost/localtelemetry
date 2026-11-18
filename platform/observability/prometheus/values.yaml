@@ -78,13 +78,13 @@ scrapeConfigs:
   otel-gateway:
     static_configs:
       - targets:
-          - gateway-collector.telemetry.svc.cluster.local:8888
+          - gateway-collector-metrics.telemetry.svc.cluster.local:8888
         labels:
           collector: gateway
   otel-gateway-slo:
     static_configs:
       - targets:
-          - gateway-collector.telemetry.svc.cluster.local:8889
+          - gateway-collector-metrics.telemetry.svc.cluster.local:8889
         labels:
           collector: gateway
   otel-backend:
