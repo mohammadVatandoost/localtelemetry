@@ -171,6 +171,7 @@ No password is stored in Git. Grafana's password is a Secret created at bootstra
 ```bash
 scripts/send-telemetry.sh
 scripts/verify-elasticsearch.sh
+scripts/test-slo.sh
 ```
 
 `verify-elasticsearch.sh` checks the three data streams. To look for the ids printed by the send script:
@@ -234,7 +235,9 @@ Logs use `ObservedTimestamp - Timestamp` at the gateway.
 - The value is not network latency. It includes SDK buffering, send delay, and clock difference between the SDK host and the gateway.
 - A missing timestamp or a negative duration is a data-quality failure. Those records are counted on `otel_log_timestamp_missing_total` and `otel_log_timestamp_negative_total` and are excluded from the latency ratio.
 
-The log SLO is event-based: fraction of usable log events at or under 30 seconds, over 30 days, target 99.9%. The recording rule is `slo:logs_event_age:within_30s:ratio_30d`. Change the `30d` range and the `le="30"` bucket in `platform/observability/prometheus/values.yaml` to move the window or the threshold. The target gauge is `slo:logs_event_age:target`.
+The log SLO is event-based: fraction of usable log events at or under 30 seconds, over 30 days, target 99.9%. The recording rule is `slo:logs_event_age:within_30s:ratio_30d`. Change the `30d` range and the `le=~"30(\\.0)?"` matcher in `platform/observability/prometheus/values.yaml` to move the window or the threshold. The gateway writes that bucket as `le="30.0"`. The target gauge is `slo:logs_event_age:target`.
+
+`scripts/test-slo.sh` sends a known mix through the gateway and checks the gateway histogram. Eight logs are under 30 seconds, two are 90 seconds old, one has no timestamp, and one has a timestamp in the future. The within-30s ratio of the usable logs is 0.8. The invalid ratio of the whole batch is 2/12.
 
 Traces and metrics do not use that timestamp delta. A CronJob sends one trace and one `otel.platform.canary` point per minute, then searches Elasticsearch. The canary id is only on that synthetic series. Do not scrape those points into Prometheus. Success within 60 seconds is a probe SLO, not a statement about every trace or metric point. Rules: `slo:traces_canary:within_objective:ratio_30d` and `slo:metrics_canary:within_objective:ratio_30d`.
 

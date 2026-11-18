@@ -204,30 +204,33 @@ serverFiles:
           # Event-based log SLO. The denominator is only logs with a non-negative
           # ObservedTimestamp - Timestamp. Missing and negative durations are
           # counted by the quality rules and are not treated as fast events.
+          # The gateway Prometheus exporter writes the 30 second bound as le="30.0".
           - record: slo:logs_event_age:within_30s:ratio_30d
             expr: |
-              sum(rate(otel_log_event_age_seconds_bucket{le="30",job="otel-gateway-slo"}[30d]))
+              sum(rate(otel_log_event_age_seconds_bucket{le=~"30(\\.0)?",job="otel-gateway-slo"}[30d]))
               /
               clamp_min(sum(rate(otel_log_event_age_seconds_bucket{le="+Inf",job="otel-gateway-slo"}[30d])), 1e-12)
           - record: slo:logs_event_age:within_30s:ratio_1h
             expr: |
-              sum(rate(otel_log_event_age_seconds_bucket{le="30",job="otel-gateway-slo"}[1h]))
+              sum(rate(otel_log_event_age_seconds_bucket{le=~"30(\\.0)?",job="otel-gateway-slo"}[1h]))
               /
               clamp_min(sum(rate(otel_log_event_age_seconds_bucket{le="+Inf",job="otel-gateway-slo"}[1h])), 1e-12)
           - record: slo:logs_event_age:target
             expr: "0.999"
+          # Missing and negative counters are absent until the first bad log.
+          # vector(0) keeps the ratio defined for a clean window.
           - record: slo:logs_timestamp_quality:invalid_ratio_1h
             expr: |
               (
-                sum(rate(otel_log_timestamp_missing_total{job="otel-gateway-slo"}[1h]))
+                (sum(rate(otel_log_timestamp_missing_total{job="otel-gateway-slo"}[1h])) or vector(0))
                 +
-                sum(rate(otel_log_timestamp_negative_total{job="otel-gateway-slo"}[1h]))
+                (sum(rate(otel_log_timestamp_negative_total{job="otel-gateway-slo"}[1h])) or vector(0))
               )
               /
               clamp_min(
-                sum(rate(otel_log_timestamp_missing_total{job="otel-gateway-slo"}[1h]))
-                + sum(rate(otel_log_timestamp_negative_total{job="otel-gateway-slo"}[1h]))
-                + sum(rate(otel_log_event_age_seconds_count{job="otel-gateway-slo"}[1h])),
+                (sum(rate(otel_log_timestamp_missing_total{job="otel-gateway-slo"}[1h])) or vector(0))
+                + (sum(rate(otel_log_timestamp_negative_total{job="otel-gateway-slo"}[1h])) or vector(0))
+                + (sum(rate(otel_log_event_age_seconds_count{job="otel-gateway-slo"}[1h])) or vector(0)),
                 1e-12
               )
           # Probe-based canary SLO. Each CronJob run writes a 0/1 gauge.
@@ -246,15 +249,28 @@ serverFiles:
             expr: "0.999"
           - record: slo:metrics_canary:target
             expr: "0.999"
+          # Sum by collector and exporter before adding. The failure counters carry
+          # error.type, and a missing signal must contribute 0 rather than drop the series.
           - record: slo:pipeline:export_success:ratio_5m
             expr: |
-              sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m]) + rate(otelcol_exporter_sent_spans_total[5m]) + rate(otelcol_exporter_sent_metric_points_total[5m]))
+              (
+                sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m]))
+                + (sum by (collector, exporter) (rate(otelcol_exporter_sent_spans_total[5m])) or (sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m])) * 0))
+                + (sum by (collector, exporter) (rate(otelcol_exporter_sent_metric_points_total[5m])) or (sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m])) * 0))
+              )
               /
               clamp_min(
-                sum by (collector, exporter) (
-                  rate(otelcol_exporter_sent_log_records_total[5m]) + rate(otelcol_exporter_send_failed_log_records_total[5m])
-                  + rate(otelcol_exporter_sent_spans_total[5m]) + rate(otelcol_exporter_send_failed_spans_total[5m])
-                  + rate(otelcol_exporter_sent_metric_points_total[5m]) + rate(otelcol_exporter_send_failed_metric_points_total[5m])
+                (
+                  sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m]))
+                  + (sum by (collector, exporter) (rate(otelcol_exporter_send_failed_log_records_total[5m])) or (sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m])) * 0))
+                )
+                + (
+                  (sum by (collector, exporter) (rate(otelcol_exporter_sent_spans_total[5m])) or (sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m])) * 0))
+                  + (sum by (collector, exporter) (rate(otelcol_exporter_send_failed_spans_total[5m])) or (sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m])) * 0))
+                )
+                + (
+                  (sum by (collector, exporter) (rate(otelcol_exporter_sent_metric_points_total[5m])) or (sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m])) * 0))
+                  + (sum by (collector, exporter) (rate(otelcol_exporter_send_failed_metric_points_total[5m])) or (sum by (collector, exporter) (rate(otelcol_exporter_sent_log_records_total[5m])) * 0))
                 ),
                 1e-12
               )

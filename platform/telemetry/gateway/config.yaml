@@ -85,6 +85,11 @@ processors:
     timeout: 1s
     send_batch_size: 256
     send_batch_max_size: 512
+  # signaltometrics emits delta histograms whose start time is the epoch.
+  # The Prometheus exporter drops every later point unless those deltas are
+  # accumulated first, so the 30s ratio would stay frozen after the first batch.
+  delta_to_cumulative:
+    max_stale: 15m
   k8sattributes:
     auth_type: serviceAccount
     passthrough: false
@@ -211,5 +216,5 @@ service:
       exporters: [kafka]
     metrics/event_age:
       receivers: [signaltometrics]
-      processors: [batch]
+      processors: [delta_to_cumulative, batch]
       exporters: [prometheus/slo]
