@@ -22,15 +22,15 @@ data:
     "id": 2, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
     "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(otelcol_receiver_accepted_log_records_total{job=\"otel-gateway\"}[5m]))",
     "refId": "A", "legendFormat": "logs"}, {"expr": "sum(rate(otelcol_receiver_accepted_spans_total{job=\"otel-gateway\"}[5m]))",
-    "refId": "A", "legendFormat": "spans"}, {"expr": "sum(rate(otelcol_receiver_accepted_metric_points_total{job=\"otel-gateway\"}[5m]))",
-    "refId": "A", "legendFormat": "metric points"}], "title": "Gateway accepted logs,
+    "refId": "B", "legendFormat": "spans"}, {"expr": "sum(rate(otelcol_receiver_accepted_metric_points_total{job=\"otel-gateway\"}[5m]))",
+    "refId": "C", "legendFormat": "metric points"}], "title": "Gateway accepted logs,
     spans, metric points", "type": "timeseries"}, {"datasource": {"type": "prometheus",
     "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides":
     []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 3}, "id": 3, "options": {"legend":
     {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
     "targets": [{"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesin_total[5m]))",
     "refId": "A", "legendFormat": "bytes in"}, {"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesout_total[5m]))",
-    "refId": "A", "legendFormat": "bytes out"}], "title": "Kafka bytes in and out",
+    "refId": "B", "legendFormat": "bytes out"}], "title": "Kafka bytes in and out",
     "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
     "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h":
     8, "w": 12, "x": 0, "y": 11}, "id": 4, "options": {"legend": {"displayMode": "list",
@@ -41,8 +41,8 @@ data:
     12, "y": 11}, "id": 5, "options": {"legend": {"displayMode": "list", "placement":
     "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(otelcol_exporter_sent_log_records_total{job=\"otel-backend\"}[5m]))",
     "refId": "A", "legendFormat": "logs"}, {"expr": "sum(rate(otelcol_exporter_sent_spans_total{job=\"otel-backend\"}[5m]))",
-    "refId": "A", "legendFormat": "spans"}, {"expr": "sum(rate(otelcol_exporter_sent_metric_points_total{job=\"otel-backend\"}[5m]))",
-    "refId": "A", "legendFormat": "metric points"}], "title": "Backend export rate",
+    "refId": "B", "legendFormat": "spans"}, {"expr": "sum(rate(otelcol_exporter_sent_metric_points_total{job=\"otel-backend\"}[5m]))",
+    "refId": "C", "legendFormat": "metric points"}], "title": "Backend export rate",
     "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
     "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h":
     8, "w": 12, "x": 0, "y": 19}, "id": 6, "options": {"legend": {"displayMode": "list",
@@ -55,7 +55,7 @@ data:
     "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_failed_total[5m]))
     or sum(rate(elasticsearch_indices_indexing_index_failed_total[5m]))", "refId":
     "A", "legendFormat": "es failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_log_records_total{job=\"otel-backend\"}[5m])) or vector(0)",
-    "refId": "A", "legendFormat": "log export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_spans_total{job=\"otel-backend\"}[5m])) or vector(0)",
-    "refId": "A", "legendFormat": "span export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total{job=\"otel-backend\"}[5m])) or vector(0)",
-    "refId": "A", "legendFormat": "metric export failed"}], "title": "Indexing failures",
+    "refId": "B", "legendFormat": "log export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_spans_total{job=\"otel-backend\"}[5m])) or vector(0)",
+    "refId": "C", "legendFormat": "span export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total{job=\"otel-backend\"}[5m])) or vector(0)",
+    "refId": "D", "legendFormat": "metric export failed"}], "title": "Indexing failures",
     "type": "timeseries"}]}'

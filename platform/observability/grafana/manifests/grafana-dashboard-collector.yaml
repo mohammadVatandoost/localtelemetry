@@ -18,17 +18,17 @@ data:
     {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
     "targets": [{"expr": "sum by (collector) (rate(otelcol_receiver_accepted_log_records_total[5m]))",
     "refId": "A", "legendFormat": "{{collector}} logs"}, {"expr": "sum by (collector)
-    (rate(otelcol_receiver_accepted_spans_total[5m]))", "refId": "A", "legendFormat":
+    (rate(otelcol_receiver_accepted_spans_total[5m]))", "refId": "B", "legendFormat":
     "{{collector}} spans"}, {"expr": "sum by (collector) (rate(otelcol_receiver_accepted_metric_points_total[5m]))",
-    "refId": "A", "legendFormat": "{{collector}} metrics"}], "title": "Accepted telemetry",
+    "refId": "C", "legendFormat": "{{collector}} metrics"}], "title": "Accepted telemetry",
     "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
     "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h":
     8, "w": 12, "x": 12, "y": 0}, "id": 2, "options": {"legend": {"displayMode": "list",
     "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum
     by (collector) (rate(otelcol_receiver_refused_log_records_total[5m]))", "refId":
     "A", "legendFormat": "{{collector}} logs"}, {"expr": "sum by (collector) (rate(otelcol_receiver_refused_spans_total[5m]))",
-    "refId": "A", "legendFormat": "{{collector}} spans"}, {"expr": "sum by (collector)
-    (rate(otelcol_receiver_refused_metric_points_total[5m]))", "refId": "A", "legendFormat":
+    "refId": "B", "legendFormat": "{{collector}} spans"}, {"expr": "sum by (collector)
+    (rate(otelcol_receiver_refused_metric_points_total[5m]))", "refId": "C", "legendFormat":
     "{{collector}} metrics"}], "title": "Refused telemetry", "type": "timeseries"},
     {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
     {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
@@ -40,7 +40,7 @@ data:
     "x": 12, "y": 8}, "id": 4, "options": {"legend": {"displayMode": "list", "placement":
     "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (collector)
     (otelcol_exporter_queue_size)", "refId": "A", "legendFormat": "{{collector}} size"},
-    {"expr": "sum by (collector) (otelcol_exporter_queue_capacity)", "refId": "A",
+    {"expr": "sum by (collector) (otelcol_exporter_queue_capacity)", "refId": "B",
     "legendFormat": "{{collector}} capacity"}], "title": "Exporter queue size and
     capacity", "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid":
     "prometheus"}, "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},

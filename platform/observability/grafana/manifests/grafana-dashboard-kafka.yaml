@@ -21,14 +21,14 @@ data:
     2, "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip":
     {"mode": "multi"}}, "targets": [{"expr": "kafka_server_kafkaserver_brokerstate",
     "refId": "A", "legendFormat": "state"}, {"expr": "up{job=\"kafka\"}", "refId":
-    "A", "legendFormat": "metrics up"}, {"expr": "up{job=\"kafka-exporter\"}", "refId":
-    "A", "legendFormat": "exporter up"}], "title": "Broker state", "type": "timeseries"},
+    "B", "legendFormat": "metrics up"}, {"expr": "up{job=\"kafka-exporter\"}", "refId":
+    "C", "legendFormat": "exporter up"}], "title": "Broker state", "type": "timeseries"},
     {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
     {"unit": "Bps"}, "overrides": []}, "gridPos": {"h": 8, "w": 16, "x": 8, "y": 3},
     "id": 3, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
     "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesin_total[5m]))",
     "refId": "A", "legendFormat": "{{topic}} in"}, {"expr": "sum by (topic) (rate(kafka_server_brokertopicmetrics_bytesout_total[5m]))",
-    "refId": "A", "legendFormat": "{{topic}} out"}], "title": "Topic bytes", "type":
+    "refId": "B", "legendFormat": "{{topic}} out"}], "title": "Topic bytes", "type":
     "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
     {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12,
     "x": 0, "y": 11}, "id": 4, "options": {"legend": {"displayMode": "list", "placement":
@@ -40,7 +40,7 @@ data:
     5, "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip":
     {"mode": "multi"}}, "targets": [{"expr": "kafka_server_replicamanager_partitioncount",
     "refId": "A", "legendFormat": "partitions"}, {"expr": "count by (topic) (kafka_topic_partitions{topic=~\"otel-.*\"})
-    or kafka_server_replicamanager_partitioncount", "refId": "A", "legendFormat":
+    or kafka_server_replicamanager_partitioncount", "refId": "B", "legendFormat":
     "topic partitions"}], "title": "Partition count", "type": "timeseries"}, {"datasource":
     {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit":
     "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 19}, "id":
@@ -53,5 +53,5 @@ data:
     {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
     "targets": [{"expr": "sum by (topic) (kafka_log_log_size)", "refId": "A", "legendFormat":
     "{{topic}}"}, {"expr": "max(node_filesystem_avail_bytes{fstype=\"ext4\"})", "refId":
-    "A", "legendFormat": "node free"}], "title": "Log size and node disk", "type":
+    "B", "legendFormat": "node free"}], "title": "Log size and node disk", "type":
     "timeseries"}]}'

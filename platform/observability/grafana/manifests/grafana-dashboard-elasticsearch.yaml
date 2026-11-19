@@ -38,7 +38,7 @@ data:
     or sum(rate(elasticsearch_indices_refresh_total[5m]))", "refId": "A", "legendFormat":
     "refresh"}, {"expr": "sum(rate(elasticsearch_index_stats_refresh_time_seconds_total[5m]))
     or sum(rate(elasticsearch_indices_refresh_time_seconds_total[5m]))", "refId":
-    "A", "legendFormat": "refresh time"}], "title": "Refresh", "type": "timeseries"},
+    "B", "legendFormat": "refresh time"}], "title": "Refresh", "type": "timeseries"},
     {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
     {"unit": "short"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y":
     16}, "id": 5, "options": {"legend": {"displayMode": "list", "placement": "bottom"},

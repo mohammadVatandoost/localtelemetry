@@ -30,7 +30,7 @@ data:
     {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode":
     "multi"}}, "targets": [{"expr": "slo:logs_event_age:within_30s:ratio_30d", "refId":
     "A", "legendFormat": "30d ratio"}, {"expr": "slo:logs_event_age:target", "refId":
-    "A", "legendFormat": "target 99.9%"}], "title": "Log event-age SLO (30d)", "type":
+    "B", "legendFormat": "target 99.9%"}], "title": "Log event-age SLO (30d)", "type":
     "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
     {"defaults": {"unit": "percentunit"}, "overrides": []}, "gridPos": {"h": 8, "w":
     8, "x": 8, "y": 6}, "id": 3, "options": {"legend": {"displayMode": "list", "placement":
@@ -41,29 +41,29 @@ data:
     8, "w": 8, "x": 16, "y": 6}, "id": 4, "options": {"legend": {"displayMode": "list",
     "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "slo:logs_timestamp_quality:invalid_ratio_1h",
     "refId": "A", "legendFormat": "invalid ratio"}, {"expr": "sum(rate(otel_log_timestamp_missing_total[5m]))",
-    "refId": "A", "legendFormat": "missing"}, {"expr": "sum(rate(otel_log_timestamp_negative_total[5m]))",
-    "refId": "A", "legendFormat": "negative"}], "title": "Log timestamp quality failures
+    "refId": "B", "legendFormat": "missing"}, {"expr": "sum(rate(otel_log_timestamp_negative_total[5m]))",
+    "refId": "C", "legendFormat": "negative"}], "title": "Log timestamp quality failures
     (1h)", "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
     "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []}, "gridPos":
     {"h": 8, "w": 8, "x": 0, "y": 14}, "id": 5, "options": {"legend": {"displayMode":
     "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr":
     "slo:traces_canary:within_objective:ratio_30d", "refId": "A", "legendFormat":
-    "30d"}, {"expr": "slo:traces_canary:within_objective:ratio_1h", "refId": "A",
-    "legendFormat": "1h"}, {"expr": "slo:traces_canary:target", "refId": "A", "legendFormat":
+    "30d"}, {"expr": "slo:traces_canary:within_objective:ratio_1h", "refId": "B",
+    "legendFormat": "1h"}, {"expr": "slo:traces_canary:target", "refId": "C", "legendFormat":
     "target"}], "title": "Trace canary SLO", "type": "timeseries"}, {"datasource":
     {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit":
     "percentunit"}, "overrides": []}, "gridPos": {"h": 8, "w": 8, "x": 8, "y": 14},
     "id": 6, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
     "tooltip": {"mode": "multi"}}, "targets": [{"expr": "slo:metrics_canary:within_objective:ratio_30d",
     "refId": "A", "legendFormat": "30d"}, {"expr": "slo:metrics_canary:within_objective:ratio_1h",
-    "refId": "A", "legendFormat": "1h"}, {"expr": "slo:metrics_canary:target", "refId":
-    "A", "legendFormat": "target"}], "title": "Metric canary SLO", "type": "timeseries"},
+    "refId": "B", "legendFormat": "1h"}, {"expr": "slo:metrics_canary:target", "refId":
+    "C", "legendFormat": "target"}], "title": "Metric canary SLO", "type": "timeseries"},
     {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
     {"unit": "s"}, "overrides": []}, "gridPos": {"h": 8, "w": 8, "x": 16, "y": 14},
     "id": 7, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
     "tooltip": {"mode": "multi"}}, "targets": [{"expr": "otel_canary_e2e_latency_seconds",
     "refId": "A", "legendFormat": "{{signal}}"}, {"expr": "otel_canary_delivery_success",
-    "refId": "A", "legendFormat": "{{signal}} success"}], "title": "Latest canary
+    "refId": "B", "legendFormat": "{{signal}} success"}], "title": "Latest canary
     latency", "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid":
     "prometheus"}, "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides":
     []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22}, "id": 8, "options": {"legend":

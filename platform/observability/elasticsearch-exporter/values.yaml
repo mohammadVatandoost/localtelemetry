@@ -2,9 +2,10 @@ fullnameOverride: elasticsearch-exporter
 replicaCount: 1
 
 es:
-  # The certificate covers otel-es-http.telemetry.svc. cluster.local is not a SAN,
-  # so every Elasticsearch dashboard query stays empty while TLS verification fails.
-  uri: https://elastic@otel-es-http.telemetry.svc:9200
+  # Leave credentials out of the URI. The exporter applies them only when both
+  # ES_USERNAME and ES_PASSWORD are set. A user in the URI with no password is
+  # sent as an empty password, Elasticsearch returns 401, and the dashboards stay empty.
+  uri: https://otel-es-http.telemetry.svc:9200
   all: true
   indices: true
   indices_settings: false
@@ -25,6 +26,9 @@ es:
       path: /ssl/ca.crt
     client:
       enabled: false
+
+env:
+  ES_USERNAME: elastic
 
 extraEnvSecrets:
   ES_PASSWORD:
