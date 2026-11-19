@@ -10,15 +10,18 @@ metadata:
     grafana_folder: OpenTelemetry
 data:
   otel-ingestion.json: '{"uid": "otel-ingestion", "title": "Ingestion overview", "description":
-    "End-to-end ingestion rates.", "tags": ["otel-platform"], "timezone": "browser",
+    "End-to-end ingestion rates, log ingestion delay, and the metrics pipelines.", "tags": ["otel-platform"], "timezone": "browser",
     "schemaVersion": 39, "version": 1, "refresh": "30s", "time": {"from": "now-1h",
-    "to": "now"}, "panels": [{"gridPos": {"h": 3, "w": 24, "x": 0, "y": 0}, "id":
+    "to": "now"}, "panels": [{"gridPos": {"h": 5, "w": 24, "x": 0, "y": 0}, "id":
     1, "options": {"mode": "markdown", "content": "Incoming telemetry is counted at
     the gateway receiver. Kafka throughput is broker bytes. Backend throughput is
     what the backend collector exported to Elasticsearch. Indexing rate is an Elasticsearch
-    operational indicator, not the ingestion SLO."}, "title": "", "type": "text"},
+    operational indicator, not the ingestion SLO. Log ingestion delay is ObservedTimestamp
+    minus Timestamp at the gateway, for logs that have both timestamps. The metrics
+    charts split the gateway path, OTLP and kubeletstats into the otel-metrics topic,
+    from the backend scrape of Kafka JMX."}, "title": "", "type": "text"},
     {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
-    {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 3},
+    {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
     "id": 2, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
     "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(otelcol_receiver_accepted_log_records_total{job=\"otel-gateway\"}[5m]))",
     "refId": "A", "legendFormat": "logs"}, {"expr": "sum(rate(otelcol_receiver_accepted_spans_total{job=\"otel-gateway\"}[5m]))",
@@ -26,36 +29,74 @@ data:
     "refId": "C", "legendFormat": "metric points"}], "title": "Gateway accepted logs,
     spans, metric points", "type": "timeseries"}, {"datasource": {"type": "prometheus",
     "uid": "prometheus"}, "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides":
-    []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 3}, "id": 3, "options": {"legend":
+    []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5}, "id": 3, "options": {"legend":
     {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
     "targets": [{"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesin_total[5m]))",
     "refId": "A", "legendFormat": "bytes in"}, {"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesout_total[5m]))",
     "refId": "B", "legendFormat": "bytes out"}], "title": "Kafka bytes in and out",
     "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
     "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}, "gridPos": {"h":
-    8, "w": 12, "x": 0, "y": 11}, "id": 4, "options": {"legend": {"displayMode": "list",
+    8, "w": 12, "x": 0, "y": 13}, "id": 4, "options": {"legend": {"displayMode": "list",
     "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "kafka:consumer_lag:otel_backend",
     "refId": "A", "legendFormat": "{{topic}}"}], "title": "Kafka consumer lag", "type":
     "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig":
     {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x":
-    12, "y": 11}, "id": 5, "options": {"legend": {"displayMode": "list", "placement":
+    12, "y": 13}, "id": 5, "options": {"legend": {"displayMode": "list", "placement":
     "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(otelcol_exporter_sent_log_records_total{job=\"otel-backend\"}[5m]))",
     "refId": "A", "legendFormat": "logs"}, {"expr": "sum(rate(otelcol_exporter_sent_spans_total{job=\"otel-backend\"}[5m]))",
     "refId": "B", "legendFormat": "spans"}, {"expr": "sum(rate(otelcol_exporter_sent_metric_points_total{job=\"otel-backend\"}[5m]))",
     "refId": "C", "legendFormat": "metric points"}], "title": "Backend export rate",
     "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
     "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h":
-    8, "w": 12, "x": 0, "y": 19}, "id": 6, "options": {"legend": {"displayMode": "list",
+    8, "w": 12, "x": 0, "y": 21}, "id": 6, "options": {"legend": {"displayMode": "list",
     "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_total[5m]))
     or sum(rate(elasticsearch_indices_indexing_index_total[5m]))", "refId": "A", "legendFormat":
     "index total"}], "title": "Elasticsearch indexing rate", "type": "timeseries"},
     {"datasource": {"type": "prometheus", "uid": "prometheus"}, "fieldConfig": {"defaults":
     {"unit": "ops"}, "overrides": []}, "gridPos": {"h": 8, "w": 12, "x": 12, "y":
-    19}, "id": 7, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
+    21}, "id": 7, "options": {"legend": {"displayMode": "list", "placement": "bottom"},
     "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(elasticsearch_index_stats_indexing_index_failed_total[5m]))
     or sum(rate(elasticsearch_indices_indexing_index_failed_total[5m]))", "refId":
     "A", "legendFormat": "es failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_log_records_total{job=\"otel-backend\"}[5m])) or vector(0)",
     "refId": "B", "legendFormat": "log export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_spans_total{job=\"otel-backend\"}[5m])) or vector(0)",
     "refId": "C", "legendFormat": "span export failed"}, {"expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total{job=\"otel-backend\"}[5m])) or vector(0)",
     "refId": "D", "legendFormat": "metric export failed"}], "title": "Indexing failures",
-    "type": "timeseries"}]}'
+    "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"},
+    "description": "p50, p95, and p99 of gateway ObservedTimestamp minus Timestamp over 5 minutes. The 30s line is the log SLO threshold.",
+    "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []}, "gridPos": {"h":
+    8, "w": 24, "x": 0, "y": 29}, "id": 8, "options": {"legend": {"displayMode": "list",
+    "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "histogram_quantile(0.50,
+    sum by (le) (rate(otel_log_event_age_seconds_bucket{job=\"otel-gateway-slo\"}[5m])))",
+    "refId": "A", "legendFormat": "p50"}, {"expr": "histogram_quantile(0.95, sum by
+    (le) (rate(otel_log_event_age_seconds_bucket{job=\"otel-gateway-slo\"}[5m])))",
+    "refId": "B", "legendFormat": "p95"}, {"expr": "histogram_quantile(0.99, sum by
+    (le) (rate(otel_log_event_age_seconds_bucket{job=\"otel-gateway-slo\"}[5m])))",
+    "refId": "C", "legendFormat": "p99"}, {"expr": "vector(30)", "refId": "D", "legendFormat":
+    "30s objective"}], "title": "Log ingestion delay", "type": "timeseries"}, {"datasource":
+    {"type": "prometheus", "uid": "prometheus"}, "description": "OTLP and kubelet
+    pod metrics accepted by the gateway and exported to the otel-metrics topic.",
+    "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h":
+    8, "w": 8, "x": 0, "y": 37}, "id": 9, "options": {"legend": {"displayMode": "list",
+    "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(otelcol_receiver_accepted_metric_points_total{job=\"otel-gateway\",receiver=\"otlp\"}[5m]))",
+    "refId": "A", "legendFormat": "otlp accepted"}, {"expr": "sum(rate(otelcol_receiver_accepted_metric_points_total{job=\"otel-gateway\",receiver=\"kubeletstats\"}[5m]))",
+    "refId": "B", "legendFormat": "kubeletstats accepted"}, {"expr": "sum(rate(otelcol_exporter_sent_metric_points_total{job=\"otel-gateway\",exporter=\"kafka\"}[5m]))",
+    "refId": "C", "legendFormat": "exported to kafka"}], "title": "Gateway metrics
+    pipeline", "type": "timeseries"}, {"datasource": {"type": "prometheus", "uid":
+    "prometheus"}, "description": "Broker bytes on the otel-metrics topic.", "fieldConfig":
+    {"defaults": {"unit": "Bps"}, "overrides": []}, "gridPos": {"h": 8, "w": 8, "x":
+    8, "y": 37}, "id": 10, "options": {"legend": {"displayMode": "list", "placement":
+    "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesin_total{topic=\"otel-metrics\"}[5m]))",
+    "refId": "A", "legendFormat": "bytes in"}, {"expr": "sum(rate(kafka_server_brokertopicmetrics_bytesout_total{topic=\"otel-metrics\"}[5m]))",
+    "refId": "B", "legendFormat": "bytes out"}], "title": "otel-metrics Kafka", "type":
+    "timeseries"}, {"datasource": {"type": "prometheus", "uid": "prometheus"}, "description":
+    "The kafka receiver consumes the otel-metrics topic. The prometheus/kafka receiver
+    scrapes broker JMX on this replica. The Elasticsearch line is the sum of both pipelines.",
+    "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []}, "gridPos": {"h":
+    8, "w": 8, "x": 16, "y": 37}, "id": 11, "options": {"legend": {"displayMode":
+    "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}, "targets": [{"expr":
+    "sum(rate(otelcol_receiver_accepted_metric_points_total{job=\"otel-backend\",receiver=\"kafka\"}[5m]))",
+    "refId": "A", "legendFormat": "from otel-metrics"}, {"expr": "sum(rate(otelcol_receiver_accepted_metric_points_total{job=\"otel-backend\",receiver=\"prometheus/kafka\"}[5m]))",
+    "refId": "B", "legendFormat": "from Kafka JMX"}, {"expr": "sum(rate(otelcol_exporter_sent_metric_points_total{job=\"otel-backend\",exporter=\"elasticsearch\"}[5m]))",
+    "refId": "C", "legendFormat": "exported to Elasticsearch"}, {"expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total{job=\"otel-backend\",exporter=\"elasticsearch\"}[5m]))
+    or vector(0)", "refId": "D", "legendFormat": "export failed"}], "title": "Backend
+    metrics pipelines", "type": "timeseries"}]}'
